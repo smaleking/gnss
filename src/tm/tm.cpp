@@ -53,9 +53,9 @@ void init_track()
 	InitSecondOrderFilter(&secondOrderCodeFilter, 5);
 
 	initPRNCodeTable(prncodetable[0]);
-	testFileIQ = fopen("/mnt/Win7Share/testFileIQ.bin","w");
-	testFileCarrierFreq = fopen("/mnt/Win7Share/testFileCarrierFreq.bin","w");
-	testFileCodeFreq = fopen("/mnt/Win7Share/testFileCodeFreq.bin","w");
+	testFileIQ = fopen("./testFileIQ.bin","w");
+	testFileCarrierFreq = fopen("./testFileCarrierFreq.bin","w");
+	testFileCodeFreq = fopen("./testFileCodeFreq.bin","w");
 	//testFileOneCode = fopen("/mnt/Win7Share/testFileOneCode.bin","w");
 }
 
@@ -197,8 +197,6 @@ void correlate(track_information *one_satellite_info, char *inbuffer)
 				one_satellite_info->correlates[j][0] = 0;
 				one_satellite_info->correlates[j][1] = 0;
 			}
-			//memcpy(one_satellite_info->measuresIQ, one_satellite_info->correlates, 6 * sizeof(int));
-			//memset(one_satellite_info->correlates, 0, 6 * sizeof(int));
 			if(one_satellite_info->prn == 5)
 			{
 				sprintf(testBuffer,"%d\t%d\t%d\t%d\t%d\t%d\n",one_satellite_info->measuresIQ[0][0],one_satellite_info->measuresIQ[0][1],
@@ -263,9 +261,10 @@ void tm_proc(void)
         printf("code phase is %d\n", temp.code_phase);
         printf("carrier freqeuncy is %f \n", temp.carrier_freq);
       }
+
       int track_num = track_info_array_list_size(&track_info_array_list);
       int i;
-      for(i = 0;i<track_num;i++)
+      for(i = 0;i<track_num;i++)      
       {
     	  correlate(get_track_info(&track_info_array_list, i), (char *)inbuffer);
       }

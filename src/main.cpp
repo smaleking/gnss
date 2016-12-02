@@ -100,7 +100,8 @@ void gnss_main(void)
 int main(int arg, char *argv[])
 {
   int ret0;
-  pDataFile = fopen("/home/dma/YKL/IFData/gps_data.bin","rb");
+//  pDataFile = fopen("/home/dma/YKL/IFData/gps_data.bin","rb");
+  pDataFile = fopen("../data/gps_data.bin","rb");
   if ( pDataFile == NULL )
   {
     printf("Raw data file does not exist!\n");
