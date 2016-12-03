@@ -14,7 +14,7 @@
 #include "../tm/tracklist.h"
 
 static acq_search_parameters acq_settings;
-extern S16 inbuffer[4000*20];
+extern S16 inbuffer[SAMPS_PER_MSEC*20];
 extern track_array_list track_info_array_list;
 // declare acq results queue
 acq_result_queue acqResQueue, *pAcqResQueue;

@@ -1,4 +1,5 @@
-/* This function is to sample the given GPS CA code of a particular satellite.
+/* =================================================================================
+ * This function is to sample the given GPS CA code of a particular satellite.
  * 
  *    Input - sampling frequency in Hz (double)
  *            sample number (int)
@@ -6,9 +7,13 @@
  *          
  *    In/Ou - sampled CA code
  *
- * this function cannot adjust the initial code phase. It alwasy perform the sampling from the initial code phase, which is 0.
- */
+ *  This function cannot adjust the initial code phase. 
+ *  It alwasy perform the sampling from the initial code phase, which is 0.
+ *
+ * =================================================================================*/
+
 #include "sampleCAcode.h"
+
 void sampleCAcode(int *cacode, double fs, int totalSamples, int *sampledCAcode)
 {
   int i;

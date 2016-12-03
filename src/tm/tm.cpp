@@ -6,31 +6,35 @@
  *   description : this file defines the function of tracking manager (tm)
  * =============================================================================*/
 #include <stdio.h>
+#include <math.h>
 #include "../rtos/kiwi_wrapper.h"
 #include "../am/am.h"
 #include "tm.h"
 #include "tracklist.h"
 #include "loopfilterconfig.h"
 #include "../utils/cacode.h"
-#include <math.h>
 #include "../inc/constantparameters.h"
+#include "../inc/rx_config.h"
 
-extern S16 inbuffer[4000*20];
+// IF sample buffer
+extern S16 inbuffer[SAMPS_PER_MSEC*20];
+
 // 32 cosine/sine lookup table
 const int costable[] = { 252, 247, 233, 210, 178, 140, 96, 49, 0, -49, -96, -140, -178, -210, -233, -247, -252, -247, -233, -210, -178, -140, -96, -49, 0, 49, 96, 140, 178, 210, 233, 247 };
 const int sintable[] = { 0, 49, 96, 140, 178, 210, 233, 247, 252, 247, 233, 210, 178, 140, 96, 49, 0, -49, -96, -140, -178, -210, -233, -247, -252, -247, -233, -210, -178, -140, -96, -49 };
+
 // tm global variables
-int prncodetable[32][1023] = {0};
+int prncodetable[GPS_SAT_NUM][1023] = {0};
 filter_parameters pll_filter_parameters,dll_filter_parameters;
 ThirdOrderFilterParameters thirdOrderPhaseFilter;
 SecondOrderFilterParameters secondOrderFreqFilter;
 SecondOrderFilterParameters secondOrderCodeFilter;
 track_array_list track_info_array_list;
+
 // log files
 FILE *testFileIQ;
 FILE *testFileCarrierFreq;
 FILE *testFileCodeFreq;
-//FILE *testFileOneCode;
 int oneTimeFlag = 0;
 char testBuffer[128];
 
@@ -38,10 +42,8 @@ char testBuffer[128];
 void initPRNCodeTable(int *prncodeTable)
 {
 	int i;
-	for(i = 0; i < 32 ; i++)
-	{
-		cacode(i+1, prncodeTable+i*1023);
-	}
+	for(i = 0; i < GPS_SAT_NUM ; i++)
+        cacode(i+1, prncodeTable+i*1023);
 }
 
 // 2. initial track_list and filter related variables
