@@ -2,7 +2,7 @@
  * loopfilterconfig.c
  *
  *  Created on: Aug 10, 2016
- *      Author: dma
+ *      Author: Kunlun Yan
  */
 
 #include "loopfilterconfig.h"

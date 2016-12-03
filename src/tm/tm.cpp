@@ -19,20 +19,22 @@ extern S16 inbuffer[4000*20];
 // 32 cosine/sine lookup table
 const int costable[] = { 252, 247, 233, 210, 178, 140, 96, 49, 0, -49, -96, -140, -178, -210, -233, -247, -252, -247, -233, -210, -178, -140, -96, -49, 0, 49, 96, 140, 178, 210, 233, 247 };
 const int sintable[] = { 0, 49, 96, 140, 178, 210, 233, 247, 252, 247, 233, 210, 178, 140, 96, 49, 0, -49, -96, -140, -178, -210, -233, -247, -252, -247, -233, -210, -178, -140, -96, -49 };
-// all PRN ca codes
+// tm global variables
 int prncodetable[32][1023] = {0};
 filter_parameters pll_filter_parameters,dll_filter_parameters;
 ThirdOrderFilterParameters thirdOrderPhaseFilter;
 SecondOrderFilterParameters secondOrderFreqFilter;
 SecondOrderFilterParameters secondOrderCodeFilter;
 track_array_list track_info_array_list;
-
+// log files
 FILE *testFileIQ;
 FILE *testFileCarrierFreq;
 FILE *testFileCodeFreq;
 //FILE *testFileOneCode;
 int oneTimeFlag = 0;
 char testBuffer[128];
+
+// 1. initial cacode
 void initPRNCodeTable(int *prncodeTable)
 {
 	int i;
@@ -42,6 +44,7 @@ void initPRNCodeTable(int *prncodeTable)
 	}
 }
 
+// 2. initial track_list and filter related variables
 void init_track()
 {
 	init_track_array_list(&track_info_array_list);
@@ -59,6 +62,7 @@ void init_track()
 	//testFileOneCode = fopen("/mnt/Win7Share/testFileOneCode.bin","w");
 }
 
+// 3. carrier tracking loop
 void carrierTrackingSDR(track_information *one_satellite_info)
 {
 	double carrError;
@@ -75,6 +79,7 @@ void carrierTrackingSDR(track_information *one_satellite_info)
 	fflush(testFileCarrierFreq);
 }
 
+// 4. code tracking loop
 void codeTrackingSDR(track_information *one_satellite_info)
 {
 	double early, late, codeError;
@@ -93,6 +98,7 @@ void codeTrackingSDR(track_information *one_satellite_info)
 	fflush(testFileCodeFreq);
 }
 
+//  not used?
 void carrierTracking(track_information *one_satellite_info)
 {
 	double cross, dot;
@@ -116,6 +122,7 @@ void carrierTracking(track_information *one_satellite_info)
 	}
 }
 
+// not used ?
 void codeTracking(track_information *one_satellite_info)
 {
 	double early,late, earlyLateError, codeFreqError;
@@ -131,6 +138,7 @@ void codeTracking(track_information *one_satellite_info)
 	fflush(testFileCodeFreq);
 }
 
+// 6. correlation for 20 ms
 void correlate(track_information *one_satellite_info, char *inbuffer)
 {
 	int i,j;
@@ -138,6 +146,7 @@ void correlate(track_information *one_satellite_info, char *inbuffer)
 	int currentCode;
 	int complexData[2];
 
+    // sample by sample processing
 	for(i = 0; i < SAMPS_PER_MSEC*40; i=i+2)
 	{
 		// carrier nco tick
@@ -146,9 +155,9 @@ void correlate(track_information *one_satellite_info, char *inbuffer)
 		{
 			one_satellite_info->carrierPhaseCycleCount++;
 		}
-		one_satellite_info->carrierPhaseBack = one_satellite_info->carrierPhase & 0x80000000;
-		one_satellite_info->carrierPhaseIndex = one_satellite_info->carrierPhase >> 27;
-		cossin[0] = costable[one_satellite_info->carrierPhaseIndex];
+		one_satellite_info->carrierPhaseBack = one_satellite_info->carrierPhase;
+		one_satellite_info->carrierPhaseIndex = one_satellite_info->carrierPhase >> 27; // 32 loop-up table
+		cossin[0] =  costable[one_satellite_info->carrierPhaseIndex];
 		cossin[1] = -sintable[one_satellite_info->carrierPhaseIndex];
 
 		// code nco tick
@@ -159,12 +168,15 @@ void correlate(track_information *one_satellite_info, char *inbuffer)
 		one_satellite_info->codeClockMultiX = (((one_satellite_info->codePhase & 0x80000000) ^ one_satellite_info->codePhaseBack) != 0) ? 1 : 0;
 		if(one_satellite_info->codeClockMultiX ==1)
 		{
+            // shift in half chip sample
 			shiftIn(&(one_satellite_info->taps), currentCode);
 			one_satellite_info->divideCount++;
+            // one chip boundary
 			if(one_satellite_info->divideCount >= one_satellite_info->fullChipSamples)
 			{
 				one_satellite_info->divideCount=0;
 				one_satellite_info->codePhaseIndex++;
+                // one code period 
 				if(one_satellite_info->codePhaseIndex >= one_satellite_info->codePeriodLength)
 				{
 					one_satellite_info->codePhaseIndex = 0;
@@ -178,14 +190,14 @@ void correlate(track_information *one_satellite_info, char *inbuffer)
 		complexData[0] = (inbuffer[i] * cossin[0] - inbuffer[i+1] * cossin[1]) >> 3;
 		complexData[1] = (inbuffer[i] * cossin[1] + inbuffer[i+1] * cossin[0]) >> 3;
 
-		//correlate
+		//correlate with E, P, L local codes
 		for(j = 0; j < 3; j++)
 		{
-			one_satellite_info->correlates[j][0] += one_satellite_info->taps.taps[j] * complexData[0];
-			one_satellite_info->correlates[j][1] += one_satellite_info->taps.taps[j] * complexData[1];
+			one_satellite_info->correlates[j][0] += one_satellite_info->taps.taps[j] * complexData[0];  // real
+			one_satellite_info->correlates[j][1] += one_satellite_info->taps.taps[j] * complexData[1];  // imag
 		}
 
-		// 1ms correlation
+		// 1ms boundary
 		if(one_satellite_info->codeCycle == 1)
 		{
 			one_satellite_info->prePromptIQ[0] = one_satellite_info->measuresIQ[1][0];
@@ -205,12 +217,14 @@ void correlate(track_information *one_satellite_info, char *inbuffer)
 				fputs(testBuffer,testFileIQ);
 				fflush(testFileIQ);
 			}
+            // loop update at 1ms boundary
 			carrierTrackingSDR(one_satellite_info);
 			codeTrackingSDR(one_satellite_info);
 		}
 	}
 }
 
+// tm thread function
 void tm_proc(void)
 {
   printf( "tm starts to run! task_id = %d\n", kiwi_get_taskID() );
@@ -264,6 +278,7 @@ void tm_proc(void)
 
       int track_num = track_info_array_list_size(&track_info_array_list);
       int i;
+      // do correlate for each PRN
       for(i = 0;i<track_num;i++)      
       {
     	  correlate(get_track_info(&track_info_array_list, i), (char *)inbuffer);

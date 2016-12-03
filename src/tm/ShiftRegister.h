@@ -2,7 +2,7 @@
  * ShiftRegister.h
  *
  *  Created on: Aug 12, 2016
- *      Author: dma
+ *      Author: Kunlun Yan
  */
 
 #ifndef SHIFTREGISTER_H_

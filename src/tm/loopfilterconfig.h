@@ -32,6 +32,7 @@ typedef struct SecondOrderFilterParametersS{
 
 // initialize third order parameters
 void InitThirdOrderFilter(ThirdOrderFilterParameters *filter, double bandwidth);
+
 // initialize second order parameters
 void InitSecondOrderFilter(SecondOrderFilterParameters *filter, double bandwidth);
 

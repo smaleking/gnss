@@ -2,7 +2,7 @@
  * ShiftRegister.c
  *
  *  Created on: Aug 12, 2016
- *      Author: dma
+ *      Author: Kunlun Yan
  */
 
 #include <stdlib.h>
@@ -25,17 +25,18 @@ void initShiftRegisterTaps(ShiftRegisterTaps *shiftRegister, int halfChipSamples
 	}
 }
 
-// read in one data sample
+// 2. read in one data sample
 void shiftIn(ShiftRegisterTaps *shiftRegister, int val)
 {
 	int i;
+    // right shift, half chip spaced
 	for(i = shiftRegister->len - 1; i > 0; i--)
 	{
 		shiftRegister->reg[i] = shiftRegister->reg[i-1];
 	}
 	shiftRegister->reg[0] = val;
-
-	shiftRegister->taps[0] = shiftRegister->reg[0];
-	shiftRegister->taps[1] = shiftRegister->reg[shiftRegister->halfChipSamples];
-	shiftRegister->taps[2] = shiftRegister->reg[shiftRegister->halfChipSamples << 1];
+    
+	shiftRegister->taps[0] = shiftRegister->reg[0];                                     // Early    
+	shiftRegister->taps[1] = shiftRegister->reg[shiftRegister->halfChipSamples];        // Prompt 
+	shiftRegister->taps[2] = shiftRegister->reg[shiftRegister->halfChipSamples << 1];   // Late
 }
