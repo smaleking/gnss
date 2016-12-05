@@ -14,7 +14,7 @@ void pf_proc(void)
   while(1)
   {
     kiwi_run_next_task();
-    sleep(1);
+    //sleep(1);
     printf("pf is executed\n");
   }
 }

@@ -39,9 +39,9 @@ typedef struct track_information_s{
 	  int codePeriodLength;
 	  ShiftRegisterTaps taps;
 	  //collerate results
-	  int correlates[3][2];//early prompt late collerate results
+	  int correlates[TM_TAP_NUM][2];//early prompt late collerate results
 	  int prePromptIQ[2];
-	  int measuresIQ[3][2];
+	  int measuresIQ[TM_TAP_NUM][2];
 	  //loop filters
 	  double carrierLoopError3rd;
 	  double carrierLoopError2nd;

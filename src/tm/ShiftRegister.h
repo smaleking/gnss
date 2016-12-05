@@ -8,10 +8,15 @@
 #ifndef SHIFTREGISTER_H_
 #define SHIFTREGISTER_H_
 
+#define TM_TAP_NUM (3)
+#define EARLY_TAP_POS (0)
+#define PROMPT_TAP_POS (1)
+#define LATE_TAP_POS (2)
+
 // define shift register taps
 typedef struct ShiftRegisterTapsS{
 	int* reg;
-	int taps[3];
+	int taps[TM_TAP_NUM];
 	int halfChipSamples;
 	int len;
 } ShiftRegisterTaps;
