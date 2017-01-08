@@ -86,6 +86,7 @@ void gnss_main(void)
     if( eleNum!= SAMPS_PER_MSEC*20 ) 
     {
     	printf("There is not enough IF data");
+        exit(1);
     }
     // send an interrupt every 20 ms
     kiwi_send_message(TASK_ID_TM, (void *)(&tm_message), sizeof(tm_message));
