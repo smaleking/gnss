@@ -17,7 +17,7 @@
 #define SAMPLING_FREQUENCY (4000000)
 
 // intermediate frequency
-#define INTERMEDIATE_FREQUENCY (-20000.0e3)
+#define INTERMEDIATE_FREQUENCY (20000.0e3)
 
 // # of samples per msec
 #define SAMPS_PER_MSEC (SAMPLING_FREQUENCY/1000)
