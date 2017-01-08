@@ -14,7 +14,6 @@ void nm_proc(void)
   while(1)
   {
     kiwi_run_next_task();
-    sleep(1);
     printf("nm is executed\n");
   }
 }
