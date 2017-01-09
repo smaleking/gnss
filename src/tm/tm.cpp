@@ -65,83 +65,83 @@ void init_track()
 }
 
 // 3. carrier tracking loop
-void carrierTrackingSDR(track_information *one_satellite_info)
+void carrierTrackingSDR(track_information *ch)
 {
 	double carrError;
-	carrError = atan((double)one_satellite_info->measuresIQ[1][1] / (double)one_satellite_info->measuresIQ[1][0]) / (2.0 * pi);
-	one_satellite_info->carrNco = one_satellite_info->oldCarrNco + (pll_filter_parameters.tau2 / pll_filter_parameters.tau1)
-			* (carrError - one_satellite_info->oldCarrError) + carrError * 0.001 / pll_filter_parameters.tau1;
-	one_satellite_info->oldCarrNco = one_satellite_info->carrNco;
-	one_satellite_info->oldCarrError = carrError;
-	one_satellite_info->carrierFreq = one_satellite_info->carrierFreqBasis + one_satellite_info->carrNco;
-	one_satellite_info->carrierPhaseStep = (unsigned int)(pow(2,32) * one_satellite_info->carrierFreq / SAMPLING_FREQUENCY);
+	carrError = atan((double)ch->measuresIQ[1][1] / (double)ch->measuresIQ[1][0]) / (2.0 * pi);
+	ch->carrNco = ch->oldCarrNco + (pll_filter_parameters.tau2 / pll_filter_parameters.tau1)
+			* (carrError - ch->oldCarrError) + carrError * 0.001 / pll_filter_parameters.tau1;
+	ch->oldCarrNco = ch->carrNco;
+	ch->oldCarrError = carrError;
+	ch->carrierFreq = ch->carrierFreqBasis + ch->carrNco;
+	ch->carrierPhaseStep = (unsigned int)(pow(2,32) * ch->carrierFreq / SAMPLING_FREQUENCY);
 
-	sprintf(testBuffer, "%f\n", one_satellite_info->carrierFreq);
+	sprintf(testBuffer, "%f\n", ch->carrierFreq);
 	fputs(testBuffer, testFileCarrierFreq);
 	fflush(testFileCarrierFreq);
 }
 
 // 4. code tracking loop
-void codeTrackingSDR(track_information *one_satellite_info)
+void codeTrackingSDR(track_information *ch)
 {
 	double early, late, codeError;
-	early = sqrt(one_satellite_info->measuresIQ[0][0] * one_satellite_info->measuresIQ[0][0] + one_satellite_info->measuresIQ[0][1] * one_satellite_info->measuresIQ[0][1]);
-	late = sqrt(one_satellite_info->measuresIQ[2][0] * one_satellite_info->measuresIQ[2][0] + one_satellite_info->measuresIQ[2][1] * one_satellite_info->measuresIQ[2][1]);
+	early = sqrt(ch->measuresIQ[0][0] * ch->measuresIQ[0][0] + ch->measuresIQ[0][1] * ch->measuresIQ[0][1]);
+	late = sqrt(ch->measuresIQ[2][0] * ch->measuresIQ[2][0] + ch->measuresIQ[2][1] * ch->measuresIQ[2][1]);
 	codeError = (early-late)/(early+late)/2;
-	one_satellite_info->codeNco = one_satellite_info->oldCodeNco + dll_filter_parameters.tau2 / dll_filter_parameters.tau1
-			* (codeError - one_satellite_info->oldCodeError) + codeError * 0.001 / dll_filter_parameters.tau1;
-	one_satellite_info->oldCodeNco = one_satellite_info->codeNco;
-	one_satellite_info->oldCodeError = codeError;
-	one_satellite_info->codeFreq = one_satellite_info->codeFreqBasis + one_satellite_info->codeNco;
-	one_satellite_info->codePhaseStep = (unsigned int)(pow(2,32) * one_satellite_info->codeFreq * one_satellite_info->halfChipSamples / SAMPLING_FREQUENCY);
+	ch->codeNco = ch->oldCodeNco + dll_filter_parameters.tau2 / dll_filter_parameters.tau1
+			* (codeError - ch->oldCodeError) + codeError * 0.001 / dll_filter_parameters.tau1;
+	ch->oldCodeNco = ch->codeNco;
+	ch->oldCodeError = codeError;
+	ch->codeFreq = ch->codeFreqBasis + ch->codeNco;
+	ch->codePhaseStep = (unsigned int)(pow(2,32) * ch->codeFreq * ch->halfChipSamples / SAMPLING_FREQUENCY);
 
-	sprintf(testBuffer, "%f\n", one_satellite_info->codeFreq);
+	sprintf(testBuffer, "%f\n", ch->codeFreq);
 	fputs(testBuffer, testFileCodeFreq);
 	fflush(testFileCodeFreq);
 }
 
 //  not used?
-void carrierTracking(track_information *one_satellite_info)
+void carrierTracking(track_information *ch)
 {
 	double cross, dot;
 	double freqError, phaseError, carrierLoopError1st;
-	dot = one_satellite_info->prePromptIQ[0] * one_satellite_info->measuresIQ[1][0] + one_satellite_info->prePromptIQ[1] * one_satellite_info->measuresIQ[1][1];
-	cross = one_satellite_info->prePromptIQ[0] * one_satellite_info->measuresIQ[1][1] - one_satellite_info->prePromptIQ[1] * one_satellite_info->measuresIQ[1][0];
-	if((one_satellite_info->prePromptIQ[0] != 0) && (one_satellite_info->measuresIQ[1][0] != 0))
+	dot = ch->prePromptIQ[0] * ch->measuresIQ[1][0] + ch->prePromptIQ[1] * ch->measuresIQ[1][1];
+	cross = ch->prePromptIQ[0] * ch->measuresIQ[1][1] - ch->prePromptIQ[1] * ch->measuresIQ[1][0];
+	if((ch->prePromptIQ[0] != 0) && (ch->measuresIQ[1][0] != 0))
 	{
 		freqError = atan(cross/dot);
-		phaseError = atan((float)(one_satellite_info->measuresIQ[1][1])/(float)(one_satellite_info->measuresIQ[1][0]));
+		phaseError = atan((float)(ch->measuresIQ[1][1])/(float)(ch->measuresIQ[1][0]));
 
-		one_satellite_info->carrierLoopError3rd = one_satellite_info->carrierLoopError3rd + 0.001 * (secondOrderFreqFilter.C2 * freqError + thirdOrderPhaseFilter.C3 * phaseError);
-		one_satellite_info->carrierLoopError2nd = one_satellite_info->carrierLoopError2nd + 0.001 * (secondOrderFreqFilter.C1 * freqError + thirdOrderPhaseFilter.C2 * phaseError + one_satellite_info->carrierLoopError3rd);
-		carrierLoopError1st = one_satellite_info->carrierLoopError2nd + thirdOrderPhaseFilter.C1 * phaseError;
-		one_satellite_info->carrierFreq -= carrierLoopError1st;
-		one_satellite_info->carrierPhaseStep = (unsigned int)(pow(2,32) * one_satellite_info->carrierFreq / SAMPLING_FREQUENCY);
+		ch->carrierLoopError3rd = ch->carrierLoopError3rd + 0.001 * (secondOrderFreqFilter.C2 * freqError + thirdOrderPhaseFilter.C3 * phaseError);
+		ch->carrierLoopError2nd = ch->carrierLoopError2nd + 0.001 * (secondOrderFreqFilter.C1 * freqError + thirdOrderPhaseFilter.C2 * phaseError + ch->carrierLoopError3rd);
+		carrierLoopError1st = ch->carrierLoopError2nd + thirdOrderPhaseFilter.C1 * phaseError;
+		ch->carrierFreq -= carrierLoopError1st;
+		ch->carrierPhaseStep = (unsigned int)(pow(2,32) * ch->carrierFreq / SAMPLING_FREQUENCY);
 
-		sprintf(testBuffer, "%f\n", one_satellite_info->carrierFreq);
+		sprintf(testBuffer, "%f\n", ch->carrierFreq);
 		fputs(testBuffer, testFileCarrierFreq);
 		fflush(testFileCarrierFreq);
 	}
 }
 
 // not used ?
-void codeTracking(track_information *one_satellite_info)
+void codeTracking(track_information *ch)
 {
 	double early,late, earlyLateError, codeFreqError;
-	early = sqrt(one_satellite_info->measuresIQ[0][0] * one_satellite_info->measuresIQ[0][0] + one_satellite_info->measuresIQ[0][1] * one_satellite_info->measuresIQ[0][1]);
-	late = sqrt(one_satellite_info->measuresIQ[2][0] * one_satellite_info->measuresIQ[2][0] + one_satellite_info->measuresIQ[2][1] * one_satellite_info->measuresIQ[2][1]);
+	early = sqrt(ch->measuresIQ[0][0] * ch->measuresIQ[0][0] + ch->measuresIQ[0][1] * ch->measuresIQ[0][1]);
+	late = sqrt(ch->measuresIQ[2][0] * ch->measuresIQ[2][0] + ch->measuresIQ[2][1] * ch->measuresIQ[2][1]);
 	earlyLateError = -(early - late) / (early + late);
-	one_satellite_info->codeLoopError2nd = one_satellite_info->codeLoopError2nd + 0.001 * secondOrderCodeFilter.C2 * earlyLateError;
-	codeFreqError = one_satellite_info->codeLoopError2nd + secondOrderCodeFilter.C1 * earlyLateError;
-	one_satellite_info->codeFreq += codeFreqError/5;
-	one_satellite_info->codePhaseStep = (unsigned int)(pow(2,32) * one_satellite_info->codeFreq * one_satellite_info->halfChipSamples / SAMPLING_FREQUENCY);
-	sprintf(testBuffer, "%f\n", one_satellite_info->codeFreq);
+	ch->codeLoopError2nd = ch->codeLoopError2nd + 0.001 * secondOrderCodeFilter.C2 * earlyLateError;
+	codeFreqError = ch->codeLoopError2nd + secondOrderCodeFilter.C1 * earlyLateError;
+	ch->codeFreq += codeFreqError/5;
+	ch->codePhaseStep = (unsigned int)(pow(2,32) * ch->codeFreq * ch->halfChipSamples / SAMPLING_FREQUENCY);
+	sprintf(testBuffer, "%f\n", ch->codeFreq);
 	fputs(testBuffer, testFileCodeFreq);
 	fflush(testFileCodeFreq);
 }
 
 // 6. correlation for 20 ms
-void correlate(track_information *one_satellite_info, char *inbuffer)
+void correlate(track_information *ch, char *inbuffer)
 {
 	int i,j;
 	int cossin[2] = {0};
@@ -152,41 +152,41 @@ void correlate(track_information *one_satellite_info, char *inbuffer)
 	for(i = 0; i < SAMPS_PER_MSEC*40; i=i+2)
 	{
 		// carrier nco tick
-		one_satellite_info->carrierPhase += one_satellite_info->carrierPhaseStep;
-		if(((one_satellite_info->carrierPhase &0x80000000) == 0) && ((one_satellite_info->carrierPhaseBack & 0x80000000) != 0))
+		ch->carrierPhase += ch->carrierPhaseStep;
+		if(((ch->carrierPhase &0x80000000) == 0) && ((ch->carrierPhaseBack & 0x80000000) != 0))
 		{
-			one_satellite_info->carrierPhaseCycleCount++;
+			ch->carrierPhaseCycleCount++;
 		}
-		one_satellite_info->carrierPhaseBack = one_satellite_info->carrierPhase;
-		one_satellite_info->carrierPhaseIndex = one_satellite_info->carrierPhase >> 27; // 32 loop-up table
-		cossin[0] =  costable[one_satellite_info->carrierPhaseIndex];
-		cossin[1] = -sintable[one_satellite_info->carrierPhaseIndex];
+		ch->carrierPhaseBack = ch->carrierPhase;
+		ch->carrierPhaseIndex = ch->carrierPhase >> 27; // 32 loop-up table
+		cossin[0] =  costable[ch->carrierPhaseIndex];
+		cossin[1] = -sintable[ch->carrierPhaseIndex];
 
 		// code nco tick
-		one_satellite_info->codeCycle = 0;
-		currentCode = prncodetable[one_satellite_info->prn-1][one_satellite_info->codePhaseIndex];
+		ch->codeCycle = 0;
+		currentCode = prncodetable[ch->prn-1][ch->codePhaseIndex];
 
-		one_satellite_info->codePhase += one_satellite_info->codePhaseStep;
-		one_satellite_info->codeClockMultiX = (((one_satellite_info->codePhase & 0x80000000) ^ one_satellite_info->codePhaseBack) != 0) ? 1 : 0;
-		if(one_satellite_info->codeClockMultiX ==1)
+		ch->codePhase += ch->codePhaseStep;
+		ch->codeClockMultiX = (((ch->codePhase & 0x80000000) ^ ch->codePhaseBack) != 0) ? 1 : 0;
+		if(ch->codeClockMultiX ==1)
 		{
             // shift in half chip sample
-			shiftIn(&(one_satellite_info->taps), currentCode);
-			one_satellite_info->divideCount++;
+			shiftIn(&(ch->taps), currentCode);
+			ch->divideCount++;
             // one chip boundary
-			if(one_satellite_info->divideCount >= one_satellite_info->fullChipSamples)
+			if(ch->divideCount >= ch->fullChipSamples)
 			{
-				one_satellite_info->divideCount=0;
-				one_satellite_info->codePhaseIndex++;
+				ch->divideCount=0;
+				ch->codePhaseIndex++;
                 // one code period 
-				if(one_satellite_info->codePhaseIndex >= one_satellite_info->codePeriodLength)
+				if(ch->codePhaseIndex >= ch->codePeriodLength)
 				{
-					one_satellite_info->codePhaseIndex = 0;
-					one_satellite_info->codeCycle = 1;
+					ch->codePhaseIndex = 0;
+					ch->codeCycle = 1;
 				}
 			}
 		}
-		one_satellite_info->codePhaseBack = one_satellite_info->codePhase & 0x80000000;
+		ch->codePhaseBack = ch->codePhase & 0x80000000;
 
 		// carrier removal, get baseband signal
 		complexData[0] = (inbuffer[i] * cossin[0] - inbuffer[i+1] * cossin[1]) >> 3;
@@ -195,33 +195,60 @@ void correlate(track_information *one_satellite_info, char *inbuffer)
 		//correlate with E, P, L local codes
 		for(j = 0; j < 3; j++)
 		{
-			one_satellite_info->correlates[j][0] += one_satellite_info->taps.taps[j] * complexData[0];  // real
-			one_satellite_info->correlates[j][1] += one_satellite_info->taps.taps[j] * complexData[1];  // imag
+			ch->correlates[j][0] += ch->taps.taps[j] * complexData[0];  // real
+			ch->correlates[j][1] += ch->taps.taps[j] * complexData[1];  // imag
 		}
 
 		// 1ms boundary
-		if(one_satellite_info->codeCycle == 1)
+		if(ch->codeCycle == 1)
 		{
-			one_satellite_info->prePromptIQ[0] = one_satellite_info->measuresIQ[1][0];
-			one_satellite_info->prePromptIQ[1] = one_satellite_info->measuresIQ[1][1];
+            // save prompt I/Q
+			ch->prePromptIQ[0] = ch->measuresIQ[1][0];
+			ch->prePromptIQ[1] = ch->measuresIQ[1][1];
+            // update ms cnt
+            ch->oneMsCnt++;
+            ch->mod20cnt = (ch->mod20cnt+1)%20;
+            int mod20cnt = ch->mod20cnt;
+            ch->Bits[mod20cnt] = (ch->correlates[1][0])>0? 1:-1;
+            if (ch->oneMsCnt>1000 && ch->state==1 )    // > 1s, assume stable tracking loop
+            {
+                int preMod20cnt = (ch->mod20cnt == 0)? 19: ch->mod20cnt-1;
+                if (ch->Bits[mod20cnt] != ch->Bits[preMod20cnt]) 
+                {
+                    ch->BitFlipCnt[mod20cnt]++;
+                    if (ch->BitFlipCnt[mod20cnt] > 5)
+                    {
+                        for (int k = 0; k < 20; k++)
+                            if( ch->BitFlipCnt[k] > 1 && k != mod20cnt)
+                                exit(1);
+                        ch->state = 2;  // in bit sync mode
+                        ch->mod20cnt  = 0;
+                    }
+                }
+            }
+            // save for measurement
 			for(j = 0; j < 3; j++)
 			{
-				one_satellite_info->measuresIQ[j][0] = one_satellite_info->correlates[j][0]>>5;
-				one_satellite_info->measuresIQ[j][1] = one_satellite_info->correlates[j][1]>>5;
-				one_satellite_info->correlates[j][0] = 0;
-				one_satellite_info->correlates[j][1] = 0;
+				ch->measuresIQ[j][0] = ch->correlates[j][0]>>5;
+				ch->measuresIQ[j][1] = ch->correlates[j][1]>>5;
+				ch->correlates[j][0] = 0;
+				ch->correlates[j][1] = 0;
 			}
-			if(one_satellite_info->prn == 5)
-			{
-				sprintf(testBuffer,"%d\t%d\t%d\t%d\t%d\t%d\n",one_satellite_info->measuresIQ[0][0],one_satellite_info->measuresIQ[0][1],
-						one_satellite_info->measuresIQ[1][0],one_satellite_info->measuresIQ[1][1],
-						one_satellite_info->measuresIQ[2][0],one_satellite_info->measuresIQ[2][1]);
-				fputs(testBuffer,testFileIQ);
-				fflush(testFileIQ);
-			}
+			// save 1ms correlation values after bit sync
+            if (ch->state == 2) 
+            {
+                if (ch->prn == 5)
+			    {
+                    fprintf(testFileIQ, "%d, %d, %d, %d, %d, %d\n", 
+                                        ch->measuresIQ[0][0],ch->measuresIQ[0][1],
+                                        ch->measuresIQ[1][0],ch->measuresIQ[1][1],
+                                        ch->measuresIQ[2][0],ch->measuresIQ[2][1]);
+			    }
+            }
+
             // loop update at 1ms boundary
-			carrierTrackingSDR(one_satellite_info);
-			codeTrackingSDR(one_satellite_info);
+			carrierTrackingSDR(ch);
+			codeTrackingSDR(ch);
 		}
 	}
 }
@@ -250,28 +277,35 @@ void tm_proc(void)
         popAcqResultQueue(pAcqResQueue, &temp);
         if((temp.prn == 5) && (check_satellite_in_track_array_list(&track_info_array_list, 5) == 0))
         {
-			track_information one_satellite_info;
-			one_satellite_info.prn = temp.prn;
-			one_satellite_info.carrierFreq = 20000-1956;//temp.carrier_freq;
-			one_satellite_info.carrierFreqBasis = 20000-1956;
-			one_satellite_info.codeFreqBasis=1023000.0;
-			one_satellite_info.carrierPhase = 0;
-			one_satellite_info.carrierPhaseIndex = 0;
-			one_satellite_info.carrierPhaseCycleCount = 0;
-			one_satellite_info.carrierPhaseStep = (unsigned int)(pow(2,32) * one_satellite_info.carrierFreq / SAMPLING_FREQUENCY);
+			track_information ch;
+			ch.prn = temp.prn;
+			ch.carrierFreq = 20000-1956;//temp.carrier_freq;
+			ch.carrierFreqBasis = 20000-1956;
+			ch.codeFreqBasis=1023000.0;
+			ch.carrierPhase = 0;
+			ch.carrierPhaseIndex = 0;
+			ch.carrierPhaseCycleCount = 0;
+			ch.carrierPhaseStep = (unsigned int)(pow(2,32) * ch.carrierFreq / SAMPLING_FREQUENCY);
 
-			one_satellite_info.codeFreq = 1023000.0;
-			one_satellite_info.codePhaseIndex = (4000 - temp.code_phase)*1023/4000 + 1;
-			one_satellite_info.halfChipSamples = 1;
-			one_satellite_info.fullChipSamples = 2;
-			one_satellite_info.codePeriodLength = 1023;
-			one_satellite_info.codePhaseStep = (unsigned int)(pow(2,32) * 1023000 * one_satellite_info.halfChipSamples / SAMPLING_FREQUENCY);
-			initShiftRegisterTaps(&(one_satellite_info.taps),1);
+			ch.codeFreq = 1023000.0;
+			ch.codePhaseIndex = (4000 - temp.code_phase)*1023/4000 + 1;
+			ch.halfChipSamples = 1;
+			ch.fullChipSamples = 2;
+			ch.codePeriodLength = 1023;
+			ch.codePhaseStep = (unsigned int)(pow(2,32) * 1023000 * ch.halfChipSamples / SAMPLING_FREQUENCY);
+			initShiftRegisterTaps(&(ch.taps),1);
 
-			one_satellite_info.carrierLoopError3rd = 0;
-			one_satellite_info.carrierLoopError2nd = 0;
-			one_satellite_info.codeLoopError2nd = 0;
-			add_track_info_to_array_list(&track_info_array_list, &one_satellite_info);
+			ch.carrierLoopError3rd = 0;
+			ch.carrierLoopError2nd = 0;
+			ch.codeLoopError2nd = 0;
+
+            ch.oneMsCnt = 0;
+            ch.mod20cnt = 0;
+            ch.state    = 1;
+            for (int k = 0; k < 20; k++) 
+                ch.BitFlipCnt[k] = ch.Bits[k] = 0;
+
+			add_track_info_to_array_list(&track_info_array_list, &ch);
         }
         printf("prn is %d\n", temp.prn);
         printf("code phase is %d\n", temp.code_phase);

@@ -1,0 +1,11 @@
+01-08-2017
+
+Abandon the idea of adding more taps. Delete the branch multiple taps. The current implementation has intrinsic limitations of adding new taps.
+
+Work on bit sync. It should be run inside tracking loop.
+
+1. add Bits and BitFlipCnt[20]; initialize them
+2. add tracking state
+	1. pulling
+	2. bit-sync  
+

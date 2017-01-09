@@ -55,7 +55,11 @@ typedef struct track_information_s{
 	  double codeNco;
 	  double oldCodeError;
 	  //nav bits
-	  unsigned int twoFrameBits[20];
+      int state;               // 1. tracking 2. bit sync
+      unsigned long oneMsCnt;  // one ms count 
+      int mod20cnt;    // from 0 to 19
+      int Bits[20];
+	  int BitFlipCnt[20];
 } track_information;
 
 // define track_array
