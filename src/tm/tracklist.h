@@ -8,6 +8,7 @@
 #ifndef TRACKLIST_H_
 #define TRACKLIST_H_
 
+#include "kiwi_data_types.h"
 #include "ShiftRegister.h"
 
 #define	TRACK_LIST_MAX (32)
@@ -42,6 +43,7 @@ typedef struct track_information_s{
 	  int correlates[3][2];//early prompt late collerate results
 	  int prePromptIQ[2];
 	  int measuresIQ[3][2];
+      int P_i_20ms, P_q_20ms;
 	  //loop filters
 	  double carrierLoopError3rd;
 	  double carrierLoopError2nd;
@@ -50,16 +52,19 @@ typedef struct track_information_s{
 	  double oldCarrNco;
 	  double carrNco;
 	  double oldCarrError;
-
 	  double oldCodeNco;
 	  double codeNco;
 	  double oldCodeError;
 	  //nav bits
-      int state;               // 1. tracking 2. bit sync
+      int state;               // 1. tracking 2. bit sync 3. frame sync
       unsigned long oneMsCnt;  // one ms count 
       int mod20cnt;    // from 0 to 19
       int Bits[20];
 	  int BitFlipCnt[20];
+      char polarKnown;
+      char polarPositive;
+      U32 wordBuffer[20];       // 2 consecutive subframes
+      U32 frameData[6][10];
 } track_information;
 
 // define track_array

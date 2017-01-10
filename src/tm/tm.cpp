@@ -205,7 +205,7 @@ void correlate(track_information *ch, char *inbuffer)
             // save prompt I/Q
 			ch->prePromptIQ[0] = ch->measuresIQ[1][0];
 			ch->prePromptIQ[1] = ch->measuresIQ[1][1];
-            // update ms cnt
+            // update 1ms cnt
             ch->oneMsCnt++;
             ch->mod20cnt = (ch->mod20cnt+1)%20;
             int mod20cnt = ch->mod20cnt;
@@ -227,13 +227,43 @@ void correlate(track_information *ch, char *inbuffer)
                 }
             }
             // save for measurement
-			for(j = 0; j < 3; j++)
+			for (j = 0; j < 3; j++)
 			{
 				ch->measuresIQ[j][0] = ch->correlates[j][0]>>5;
 				ch->measuresIQ[j][1] = ch->correlates[j][1]>>5;
 				ch->correlates[j][0] = 0;
 				ch->correlates[j][1] = 0;
 			}
+            if (ch->state == 2) // bit synced
+            {
+                if (ch->mod20cnt == 0)
+                    ch->P_i_20ms =  ch->measuresIQ[1][0];
+                else
+                    ch->P_i_20ms += ch->measuresIQ[1][0];
+                if (ch->mod20cnt ==19)
+                {
+                    int currBit = (ch->P_i_20ms > 0)?1:0;
+                    // save currBit
+                    for (int k = 0; k < 19; k++)
+                    {
+                        ch->wordBuffer[k] <<= 1; 
+                        ch->wordBuffer[k] |= ((ch->wordBuffer[k+1]&0x20000000)>>29);
+                    }
+                    ch->wordBuffer[19] <<= 1;
+                    ch->wordBuffer[19] |= currBit;
+                    // check if have preamble or inv-preamble
+                    if ((ch->wordBuffer[0]&0x3fc00000)>>22==0x8b || (ch->wordBuffer[0]&0x3fc00000)>>22==0x74)
+                    {
+                        if ((ch->wordBuffer[10]&0x3fc00000)>>22==0x8b || (ch->wordBuffer[10]&0x3fc00000)>>22==0x74)
+                        {
+                            printf("subframe sync!\n");
+                        }
+                        else
+                            exit(2);
+                    }
+                }
+
+            }
 			// save 1ms correlation values after bit sync
             if (ch->state == 2) 
             {
@@ -299,12 +329,19 @@ void tm_proc(void)
 			ch.carrierLoopError2nd = 0;
 			ch.codeLoopError2nd = 0;
 
+            ch.P_i_20ms = 0;
+            ch.P_q_20ms = 0;
             ch.oneMsCnt = 0;
             ch.mod20cnt = 0;
             ch.state    = 1;
-            for (int k = 0; k < 20; k++) 
+            for (int k = 0; k < 20; k++) {
                 ch.BitFlipCnt[k] = ch.Bits[k] = 0;
+                ch.wordBuffer[k] = 0;
+            }
+            ch.polarKnown = 0;
+            ch.polarPositive = 0;
 
+            // add channel
 			add_track_info_to_array_list(&track_info_array_list, &ch);
         }
         printf("prn is %d\n", temp.prn);
