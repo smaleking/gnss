@@ -113,6 +113,6 @@ void am_proc(void)
             }
             is_blind_search_done=true;
         }
-        printf("am is executed\n");
+//        printf("am is executed\n");
     }
 }

@@ -90,7 +90,7 @@ void gnss_main(void)
     }
     // send an interrupt every 20 ms
     kiwi_send_message(TASK_ID_TM, (void *)(&tm_message), sizeof(tm_message));
-    printf("Interrupt is sent\n");
+//    printf("Interrupt is sent\n");
   }
 }
 

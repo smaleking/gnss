@@ -59,12 +59,15 @@ typedef struct track_information_s{
       int state;               // 1. tracking 2. bit sync 3. frame sync
       unsigned long oneMsCnt;  // one ms count 
       int mod20cnt;    // from 0 to 19
+      int bitIdx;      // from 0 to 29, bit index within a word (30 bits)
+      int wordIdx;     // from 0 to 9,  word index within a subframe (10 words)
+      int subframeIdx; // from 0 to 4;
       int Bits[20];
 	  int BitFlipCnt[20];
       char polarKnown;
       char polarPositive;
       U32 wordBuffer[20];       // 2 consecutive subframes
-      U32 frameData[6][10];
+      U32 frameData[5][10];
 } track_information;
 
 // define track_array
