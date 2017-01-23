@@ -6,8 +6,6 @@
  *   description : this file defines the function of tracking manager (tm)
  * =============================================================================*/
 #include <stdio.h>
-#include <math.h>
-#include <assert.h>
 #include "../rtos/kiwi_wrapper.h"
 #include "../am/am.h"
 #include "../nm/nm.h"
@@ -255,12 +253,12 @@ void correlate(track_information *ch, char *inbuffer)
                     ch->wordBuffer[19] <<= 1;
                     ch->wordBuffer[19] |= currBit;
                     
-                    if ( ch->state == 2) 
+                    if (ch->state == 2) 
                     {
                         // check if have preamble or inv-preamble
                         if ((ch->wordBuffer[0]&0x3fc00000)>>22==0x8b || (ch->wordBuffer[0]&0x3fc00000)>>22==0x74)
                         {
-                            if ((ch->wordBuffer[10]&0x3fc00000)>>22==0x8b||(ch->wordBuffer[10]&0x3fc00000)>>22==0x74)
+                            if ((ch->wordBuffer[10]&0x3fc00000)>>22==0x8b ||(ch->wordBuffer[10]&0x3fc00000)>>22==0x74)
                             {
                                 // decode TOW for frame sync check
                                 U32 TLW1 = ch->wordBuffer[0], HOW1 = ch->wordBuffer[1];
@@ -271,14 +269,14 @@ void correlate(track_information *ch, char *inbuffer)
                                 {
                                     ch->state = 3;
                                     // get subframe number
-                                    U8 sfIdx = ((TLW1&0x1)==0)? (HOW1>>8&0x7) : ((HOW1>>8&0x7)^(0x7));
-                                    printf("subframe is %d\n", sfIdx);
+                                    U8 subframe = ((TLW1&0x1)==0)? (HOW1>>8&0x7) : ((HOW1>>8&0x7)^(0x7));
+                                    printf("subframe is %d\n", subframe);
 
                                     // now parity-check, get the raw bits, and save current two subframes to buffered data
                                     U8 check_result;
                                     for (int k=0; k<20; k++)
                                     {
-                                        U8 temp = (k<10)? sfIdx: sfIdx+1;
+                                        U8 temp = (k<10)? subframe:subframe+1;
                                         if (k==0 || k==10)
                                             check_result = parity_check(&ch->wordBuffer[k], &ch->frameData[temp][0]);
                                         else {
@@ -294,7 +292,7 @@ void correlate(track_information *ch, char *inbuffer)
                                     // set subframe index and word index
                                     ch->bitIdx = 0;
                                     ch->wordIdx = 0;
-                                    ch->subframeIdx = (sfIdx+1)%5; // subframeIdx from 0 to 4
+                                    ch->subframeIdx = (subframe+1)%5; // subframeIdx from 0 to 4
                                 }
                             }
                         }
@@ -305,7 +303,7 @@ void correlate(track_information *ch, char *inbuffer)
                         if (ch->wordIdx == 9 && ch->bitIdx == 29) 
                         {
                             U8 check_result;
-                            // do parity check, convert to raw bits
+                            // parity check, convert to raw bits for last 10 words
                             for (int k = 10; k < 20; k++) {
                                 if (k==10)
                                     check_result = parity_check(&ch->wordBuffer[k], &ch->frameData[ch->subframeIdx][0]);
@@ -316,123 +314,23 @@ void correlate(track_information *ch, char *inbuffer)
                                     check_result = parity_check(&ch->wordBuffer[k], &ch->frameData[ch->subframeIdx][k%10]);
                                 }
                             }
-                            // get 10 words
-                            U32 TLW   = ch->frameData[ch->subframeIdx][0];
-                            U32 HOW   = ch->frameData[ch->subframeIdx][1];
-                            U32 word3 = ch->frameData[ch->subframeIdx][2];
-                            U32 word4 = ch->frameData[ch->subframeIdx][3];
-                            U32 word5 = ch->frameData[ch->subframeIdx][4];
-                            U32 word6 = ch->frameData[ch->subframeIdx][5];
-                            U32 word7 = ch->frameData[ch->subframeIdx][6];
-                            U32 word8 = ch->frameData[ch->subframeIdx][7];
-                            U32 word9 = ch->frameData[ch->subframeIdx][8];
-                            U32 word10 = ch->frameData[ch->subframeIdx][9];
-                            U32 prn    =  ch->prn;
-                            // decode  
+                            U8 prn = ch->prn;
+                            /* decode data */
                             if (ch->subframeIdx == 0) {             // subframe 1
-                                U8 subframe  =  HOW>>8 & 0x7;
-                                U32 tow      =  (HOW>>13 & 0x1ffff)*6;
-                                printf("subframe is %d, tow is %d\n", subframe, tow);
-                                U32 week     =  word3>>20 & 0x3ff;
-                                U8  uraIndex =  word3>>14 & 0xf;
-                                U8  svHealth =  word3>>8  & 0x3f;
-                                U32 toc      =  (word8>>6 & 0xffff)* 16;
-                                U16 iodc     =  (word8>>22)&0xff;   // iodc 8 lsb
-                                iodc         =  iodc | ((word3&0xc0)<<2);                                
-                                /* 2's complement */
-                                double tgd   =  (S8)(word7>>6 & 0xff) * pow(2,-31);
-                                S32 af0_int  =  ((S32)((word10&0x3fffff00)<<2))>>10;
-                                double af0   =  (double)af0_int * pow(2.0,-31);
-                                S16 af1_int  =  (word9>>6) & 0xffff;
-                                double af1   =  (double)af1_int * pow(2.0,-43);
-                                S8  af2_int  =  (word9>>22)&0xff;
-                                double af2   =  (double)af2_int * pow(2.0,-55);
+                                decodeSubframe1(ch->frameData[ch->subframeIdx], &decode_data[prn-1]);
 
-                                // save decoded data
-                                decode_data[prn-1].gpstime.gpsWeek    = week + 1024;
-                                decode_data[prn-1].gpstime.gpsSeconds = tow;
-                                decode_data[prn-1].info.URA = uraIndex;
-                                decode_data[prn-1].info.health = svHealth;
-                                decode_data[prn-1].clkCorr.tgd = tgd;
-                                decode_data[prn-1].clkCorr.af0 = af0;
-                                decode_data[prn-1].clkCorr.af1 = af1;
-                                decode_data[prn-1].clkCorr.af2 = af2;
-                                decode_data[prn-1].clkCorr.toc = toc;
-                                decode_data[prn-1].clkCorr.IODC = iodc;
-                                decode_data[prn-1].ready |= 1;
-                                assert(subframe == ch->subframeIdx+1);
                             } else if (ch->subframeIdx == 1) {      // subframe 2
-                                U8 subframe  =  HOW>>8 & 0x7;
-                                U32 tow  = (HOW>>13 & 0x1ffff)*6;
-                                printf("subframe is %d, tow is %d\n", subframe, tow);
-                                U8  IODE = word3>>22 & 0xff;                                     
-                                S16 Crs_i = (word3 & 0x3fffc0)>>6;
-                                double Crs = Crs_i * (1/32.0);
-                                S16 deltan = (word4&0x3fffc000)>>14;
-                                double delta_n = deltan * pow(2.0, -43);
-                                S32 M0_i = (word4<<18&0xff000000) | (word5>>6&0x00ffffff);
-                                double M0 = M0_i * pow(2.0, -31);
-                                S16 Cuc_i = (word6&0x3fffc000)>>14;
-                                double Cuc = Cuc_i * pow(2.0, -29);
-                                U32 e_i = (word6<<18&0xff000000) | (word7>>6&0x00ffffff);
-                                double e = e_i * pow(2, -33);
-                                S16 Cus_i = (word8&0x3fffc000)>>14;
-                                double Cus = Cus_i * pow(2, -29);
-                                U32 sqrtA_i = (word8<<18&0xff000000) | (word9>>6&0x00ffffff);
-                                double a_sqrt = sqrtA_i * pow(2.0, -19);
-                                U32 toe = ((word10&0x3fffc000)>>14)*16;
-                                // save decoded data
-                                decode_data[prn-1].eph.IODE = IODE;
-                                decode_data[prn-1].eph.Crs = Crs;
-                                decode_data[prn-1].eph.delta_n = delta_n;
-                                decode_data[prn-1].eph.M0 = M0;
-                                decode_data[prn-1].eph.Cuc = Cuc;
-                                decode_data[prn-1].eph.Cus = Cus;
-                                decode_data[prn-1].eph.e = e;
-                                decode_data[prn-1].eph.sqrt_a = a_sqrt;
-                                decode_data[prn-1].eph.toe = toe;
-                                decode_data[prn-1].ready |= (1<<1);
-                                assert(subframe == ch->subframeIdx+1);
+                                decodeSubframe2(ch->frameData[ch->subframeIdx],&decode_data[prn-1]);
+
                             } else if (ch->subframeIdx == 2) {      // subframe 3
-                                U8 subframe  =  HOW>>8 & 0x7;
-                                U32 tow  = (HOW>>13 & 0x1ffff)*6;
-                                printf("subframe is %d, tow is %d\n", subframe, tow);
-                                S16 Cic_i = (word3&0x3fffc000)>>14;
-                                double Cic = Cic_i* pow(2.0, -29);
-                                S32 Omega0_i = (word3<<18 & 0xff000000) | (word4>>6 & 0x00ffffff);
-                                double Omega0 = Omega0_i * pow(2.0,-31);
-                                S16 Cis_i = (word5&0x3fffc000)>>14;
-                                double Cis = Cis_i * pow(2.0, -29);
-                                S32 i0_i = (word5<<18&0xff000000) | (word6>>6&0x00ffffff);
-                                double i0 = i0_i * pow(2.0, -31);
-                                S16 Crc_i = (word7&0x3fffc000)>>14;
-                                double Crc = Crc_i * pow(2.0,-5);
-                                S32 omega_i = (word7<<18&0xff000000) | (word8>>6&0x00ffffff);
-                                double omega = omega_i * pow(2.0,-31);
-                                S32 Omega_dot_i = ((S32)(word9<<2))>>8;
-                                double Omega_dot = Omega_dot_i * pow(2.0,-43);
-                                U8 IODE = (word10>>22)&0xff;
-                                S16 idot_i = ((S32)(word10<<10))>>18;
-                                double idot = idot_i*pow(2.0, -43);
-                                // save decoded data
-                                decode_data[prn-1].eph.Cic = Cic;
-                                decode_data[prn-1].eph.Omega0 = Omega0;
-                                decode_data[prn-1].eph.Cis = Cis;
-                                decode_data[prn-1].eph.i0 = i0;
-                                decode_data[prn-1].eph.Crc = Crc;
-                                decode_data[prn-1].eph.omega = omega;
-                                decode_data[prn-1].eph.Omega_dot = Omega_dot;
-                                decode_data[prn-1].eph.i_dot = idot;
-                                decode_data[prn-1].ready |= (1<<2);
-                                assert(subframe == ch->subframeIdx+1);
-                            } else if (ch->subframeIdx == 3) {
-                                U8 subframe  =  HOW>>8 & 0x7;
-                                U32 tow  = (HOW>>13 & 0x1ffff)*6;
-                                printf("subframe is %d, tow is %d\n", subframe, tow);
-                            } else if (ch->subframeIdx == 4) {
-                                U8 subframe  =  HOW>>8 & 0x7;
-                                U32 tow  = (HOW>>13 & 0x1ffff)*6;
-                                printf("subframe is %d, tow is %d\n", subframe, tow);
+                                decodeSubframe3(ch->frameData[ch->subframeIdx],&decode_data[prn-1]);
+
+                            } else if (ch->subframeIdx == 3) {      // subframe 4                          
+                                printf("subframe4\n");
+
+                            } else if (ch->subframeIdx == 4) {      // subframe 5
+                                printf("subframe5\n");
+
                             } else {
                                 printf("subframe index is not right\n");
                             }

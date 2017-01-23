@@ -25,7 +25,8 @@ const U8 parity_table[] =
 
 // struct of ephemeris
 struct ephemeris_t {
-    U8 IODE;            // issue of data ephemeris, 8 bits
+    U8 IODE2;           // issue of data ephemeris, 8 bits, from subframe 2
+    U8 IODE3;           // issue of data ephemeris, 8 bits, from subframe 3
     U32 toe;            // time of ephemeris, week seconds
     double sqrt_a;      // sqrt of seme-major
     double e;           // eccentricity
@@ -66,6 +67,7 @@ struct sat_info_t {
     U8 health;          // 0 is health
 };
 
+// combined decoded data 
 struct decode_data_t {
     ephemeris_t eph;
     gps_time_t  gpstime;
@@ -79,6 +81,15 @@ extern decode_data_t decode_data[32];
 
 /* parity check for each word */
 U8 parity_check(U32 *p_dword, U32 *p_data);
+
+/* decode subframe 1*/
+void decodeSubframe1(U32 *pSrc, decode_data_t *pDst);
+
+/* decode subframe 2*/
+void decodeSubframe2(U32 *pSrc, decode_data_t *pDst);
+
+/* decode subframe 3*/
+void decodeSubframe3(U32 *pSrc, decode_data_t *pDst);
 
 /* print out decoded message */
 void print_decodedMsg(decode_data_t *pDecodedMsg);
