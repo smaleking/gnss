@@ -341,7 +341,7 @@ void correlate(track_information *ch, char *inbuffer)
                                 iodc         =  iodc | ((word3&0xc0)<<2);                                
                                 /* 2's complement */
                                 double tgd   =  (S8)(word7>>6 & 0xff) * pow(2,-31);
-                                S32 af0_int  =  ((S32)((word10&0x3fffff00)<<2))>>12;
+                                S32 af0_int  =  ((S32)((word10&0x3fffff00)<<2))>>10;
                                 double af0   =  (double)af0_int * pow(2.0,-31);
                                 S16 af1_int  =  (word9>>6) & 0xffff;
                                 double af1   =  (double)af1_int * pow(2.0,-43);
@@ -370,7 +370,7 @@ void correlate(track_information *ch, char *inbuffer)
                                 double Crs = Crs_i * (1/32.0);
                                 S16 deltan = (word4&0x3fffc000)>>14;
                                 double delta_n = deltan * pow(2.0, -43);
-                                S32 M0_i = ((word4<<18)&0xff000000) | (word5>>6&0x00ffffff);
+                                S32 M0_i = (word4<<18&0xff000000) | (word5>>6&0x00ffffff);
                                 double M0 = M0_i * pow(2.0, -31);
                                 S16 Cuc_i = (word6&0x3fffc000)>>14;
                                 double Cuc = Cuc_i * pow(2.0, -29);
@@ -439,6 +439,8 @@ void correlate(track_information *ch, char *inbuffer)
                             // check if we have collected suframes 1-3
                             if ((decode_data[prn-1].ready&0x7) == 0x7) {
                                 printf("we have colleced enough data for position fix\n");
+                                print_decodedMsg(&decode_data[prn-1]);
+
                             }
                         }
 

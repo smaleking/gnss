@@ -12,6 +12,17 @@
 
 #include "kiwi_data_types.h"
 
+const U8 parity_table[] =
+{
+  0x29, 0x16, 0x2a, 0x34,  // D29*, D30*, d1, d2
+  0x3b, 0x1c, 0x2f, 0x37,  //  d3,  d4, d5, d6
+  0x1a, 0x0d, 0x07, 0x23,  //  d7,  d8, d9, d10
+  0x31, 0x38, 0x3d, 0x3e,  // d11, d12, d13, d14
+  0x1f, 0x0e, 0x26, 0x32,  // d15, d16, d17, d18
+  0x19, 0x2c, 0x16, 0x0b,  // d19, d20, d21, d22
+  0x25, 0x13 };            // d23, d24
+
+
 // struct of ephemeris
 struct ephemeris_t {
     U8 IODE;            // issue of data ephemeris, 8 bits
@@ -63,20 +74,16 @@ struct decode_data_t {
     U8 ready;   // bit-wise indicactor: sf1 bit0, sf2 bit1, sf3 bit2, sf4 bit3, sf5 bit4
 };
 
-extern struct decode_data_t decode_data[32];
+extern decode_data_t decode_data[32];
 
 
-const U8 parity_table[] =
-{
-  0x29, 0x16, 0x2a, 0x34,  // D29*, D30*, d1, d2
-  0x3b, 0x1c, 0x2f, 0x37,  //  d3,  d4, d5, d6
-  0x1a, 0x0d, 0x07, 0x23,  //  d7,  d8, d9, d10
-  0x31, 0x38, 0x3d, 0x3e,  // d11, d12, d13, d14
-  0x1f, 0x0e, 0x26, 0x32,  // d15, d16, d17, d18
-  0x19, 0x2c, 0x16, 0x0b,  // d19, d20, d21, d22
-  0x25, 0x13 };            // d23, d24
-
+/* parity check for each word */
 U8 parity_check(U32 *p_dword, U32 *p_data);
+
+/* print out decoded message */
+void print_decodedMsg(decode_data_t *pDecodedMsg);
+
+/* main process of nm */
 void nm_proc(void);
 
 #endif

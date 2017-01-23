@@ -9,8 +9,9 @@
 #include "nm.h"
 #include "../rtos/kiwi_wrapper.h"
 
-struct decode_data_t decode_data[32];
+decode_data_t decode_data[32];
 
+/* parity check for each word */
 U8 parity_check(U32 *p_dword, U32 *p_data)
 {
   /* get the parity checksum */
@@ -43,6 +44,45 @@ U8 parity_check(U32 *p_dword, U32 *p_data)
       return 0x01;
 }
 
+/* print out decoded message */
+void print_decodedMsg(decode_data_t *pDecodedMsg)
+{
+    /* print gps time */
+    printf("gps week is %d\n", pDecodedMsg->gpstime.gpsWeek);
+    printf("gps secdons is %d\n", pDecodedMsg->gpstime.gpsSeconds);
+    printf("\n");
+    /* printf clock correction */
+    printf("IODC is %x\n", pDecodedMsg->clkCorr.IODC);
+    printf("toc is %d\n", pDecodedMsg->clkCorr.toc);
+    printf("tgd is %.12e\n", pDecodedMsg->clkCorr.tgd);
+    printf("af0 is %.12e\n", pDecodedMsg->clkCorr.af0);
+    printf("af1 is %.12e\n", pDecodedMsg->clkCorr.af1);
+    printf("af2 is %.12e\n", pDecodedMsg->clkCorr.af2);
+    printf("\n");
+    /* print satellite info */
+    printf("URA is %d\n", pDecodedMsg->info.URA);
+    printf("health is %d\n", pDecodedMsg->info.health);
+    /* print ephemeris */
+    printf("IODE is %d\n", pDecodedMsg->eph.IODE);
+    printf("toe is %d\n", pDecodedMsg->eph.toe);
+    printf("sqrt_a is %.12e\n", pDecodedMsg->eph.sqrt_a);
+    printf("e is %.12e\n", pDecodedMsg->eph.e);
+    printf("i0 is %.12e\n", pDecodedMsg->eph.i0);
+    printf("Omega0 is %.12e\n", pDecodedMsg->eph.Omega0);
+    printf("omega is %.12e\n", pDecodedMsg->eph.omega);
+    printf("M0 is %.12e\n", pDecodedMsg->eph.M0);
+    printf("delta_n is %.12e\n", pDecodedMsg->eph.delta_n);
+    printf("i_dot is %.12e\n", pDecodedMsg->eph.i_dot);
+    printf("Omega_dot is %.12e\n", pDecodedMsg->eph.Omega_dot);
+    printf("Cuc is %.12e\n", pDecodedMsg->eph.Cuc);
+    printf("Cus is %.12e\n", pDecodedMsg->eph.Cus);
+    printf("Crc is %.12e\n", pDecodedMsg->eph.Crc);
+    printf("Crs is %.12e\n", pDecodedMsg->eph.Crs);
+    printf("Cic is %.12e\n", pDecodedMsg->eph.Cic);
+    printf("Cis is %.12e\n", pDecodedMsg->eph.Cis);
+}
+
+/* main process of nm*/
 void nm_proc(void)
 {
   printf("nm starts to run! task_id = %d\n", kiwi_get_taskID());
