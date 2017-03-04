@@ -8,7 +8,7 @@
 #ifndef KIWI_WRAPPER_H
 #define KIWI_WRAPPER_H
 
-#include <unistd.h>
+#include <windows.h>
 #include "kiwi_data_types.h"
 #include "kiwi_task_msg.h"
 #include "kiwi_tasks.h"
@@ -26,7 +26,12 @@ typedef struct header_struct{
 
 void kiwi_setup(void);
 
+
+#if _WIN32
+DWORD generic_thread_entry(LPVOID data);
+#else
 void *generic_thread_entry(void *data);
+#endif
 
 U16 kiwi_get_taskID(void);
 

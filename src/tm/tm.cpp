@@ -360,7 +360,7 @@ void correlate(track_information *ch, char *inbuffer)
                 }//if (ch->mod20cnt == 19)
             } // if (ch->state >= 2)
 			// save 1ms correlation values after bit sync
-            if (ch->state >= 2) 
+            if (ch->state >= -10) 
             {
                 if (ch->prn == 5)
 			    {
@@ -394,7 +394,7 @@ void tm_proc(void)
     S32 msg_tag     = *(p_message + 4);
     S32 msg_len     = *(p_message + 8);
 
-    if ( msg_tag == 1)
+    if (msg_tag == 1)
     {
       acq_search_results temp;
       while (  !isAcqResultQueueEmpty(pAcqResQueue) )
@@ -404,26 +404,36 @@ void tm_proc(void)
         {
 			track_information ch;
 			ch.prn = temp.prn;
+
 			ch.carrierFreq = 20000-1956;//temp.carrier_freq;
 			ch.carrierFreqBasis = 20000-1956;
 			ch.codeFreqBasis=1023000.0;
+            ch.oldCarrNco = 0;           
+            ch.oldCarrError = 0;
 			ch.carrierPhase = 0;
+            ch.carrierPhaseBack = 0;
 			ch.carrierPhaseIndex = 0;
 			ch.carrierPhaseCycleCount = 0;
 			ch.carrierPhaseStep = (unsigned int)(pow(2,32) * ch.carrierFreq / SAMPLING_FREQUENCY);
 
+            ch.oldCodeNco = 0;
+            ch.oldCodeError = 0;
 			ch.codeFreq = 1023000.0;
+            ch.codePhase = 0;
+            ch.codePhaseBack = 0;
 			ch.codePhaseIndex = (4000 - temp.code_phase)*1023/4000 + 1;
 			ch.halfChipSamples = 1;
 			ch.fullChipSamples = 2;
 			ch.codePeriodLength = 1023;
 			ch.codePhaseStep = (unsigned int)(pow(2,32) * 1023000 * ch.halfChipSamples / SAMPLING_FREQUENCY);
 			initShiftRegisterTaps(&(ch.taps),1);
-
+            for (int k = 0; k < 3; k++) {
+                ch.correlates[k][0] = ch.correlates[k][1] = 0;
+            }
 			ch.carrierLoopError3rd = 0;
 			ch.carrierLoopError2nd = 0;
 			ch.codeLoopError2nd = 0;
-
+            ch.divideCount = 0;
             ch.P_i_20ms = 0;
             ch.P_q_20ms = 0;
             ch.oneMsCnt = 0;
@@ -444,19 +454,21 @@ void tm_proc(void)
             // add channel
 			add_track_info_to_array_list(&track_info_array_list, &ch);
         }
+        /*
         printf("prn is %d\n", temp.prn);
         printf("code phase is %d\n", temp.code_phase);
         printf("carrier freqeuncy is %f \n", temp.carrier_freq);
+        */
       }
 
       int track_num = track_info_array_list_size(&track_info_array_list);
       int i;
       // do correlate for each PRN
-      for(i = 0;i<track_num;i++)      
+      for(i=0; i<track_num; i++)      
       {
     	  correlate(get_track_info(&track_info_array_list, i), (char *)inbuffer);
       }
-//      printf("tm: 20ms interrupt executed\n");
+      //printf("tm is executed\n");
 
     }
   }

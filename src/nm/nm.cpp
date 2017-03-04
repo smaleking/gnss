@@ -232,9 +232,10 @@ void print_decodedMsg(decode_data_t *pDecodedMsg)
 /* main process of nm*/
 void nm_proc(void)
 {
-  printf("nm starts to run! task_id = %d\n", kiwi_get_taskID());
-  while(1)
-  {
-    kiwi_run_next_task();
-  }
+    printf("nm starts to run! task_id = %d\n", kiwi_get_taskID());
+    while(1)
+    {
+        kiwi_run_next_task();
+        //printf("nm is executed\n");
+    }
 }

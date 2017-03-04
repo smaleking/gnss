@@ -14,9 +14,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <unistd.h>
+//#include <pthread.h>
+//#include <semaphore.h>
+//#include <unistd.h>
 #include <assert.h>
 #include "rtos/kiwi_data_types.h"
 #include "rtos/kiwi_tasks.h"
@@ -41,30 +41,30 @@ void gnss_main(void)
 
   // create TM task, it is important to get ret
   ret =  kiwi_create_task_thread( TASK_ID_TM,
-                           "task_tm",
-                           tm_proc
-                          );
+                                  "task_tm",
+                                  tm_proc
+                                );
   assert( ret == 0 );
 
   // create AM task
-  ret = kiwi_create_task_thread( TASK_ID_AM,
-                           "task_am",
-                           am_proc
-                          );
+  ret = kiwi_create_task_thread(TASK_ID_AM,
+                                "task_am",
+                                am_proc
+                                );
   assert( ret == 0 );
 
   // create NM task
-  ret = kiwi_create_task_thread( TASK_ID_NM,
-                           "task_nm",
-                           nm_proc
-                          );
+  ret = kiwi_create_task_thread(TASK_ID_NM,
+                                "task_nm",
+                                nm_proc
+                                );
   assert( ret == 0 );
 
   // create PF task
-  ret = kiwi_create_task_thread( TASK_ID_PF,
-                           "task_pf",
-                           pf_proc
-                          );
+  ret = kiwi_create_task_thread(TASK_ID_PF,
+                                "task_pf",
+                                pf_proc
+                                );
   assert( ret == 0 );
 
   // unlock sem_wait_startup
@@ -74,7 +74,7 @@ void gnss_main(void)
   tm_message.header.source = TASK_ID_MAIN;
   tm_message.header.type   = TM_TAG_INTERRUPT_20MS;
   tm_message.header.length = sizeof(tm_message); // should be 16
-  tm_message.ms  = 20;
+  tm_message.ms = 20;
   // forever loop
   while(1)
   {
@@ -83,11 +83,12 @@ void gnss_main(void)
     size_t eleNum;
     // read in 20 ms data 
     eleNum = fread(inbuffer, sizeof(S16), SAMPS_PER_MSEC*20, pDataFile);
-    if( eleNum!= SAMPS_PER_MSEC*20 ) 
+    if (eleNum!= SAMPS_PER_MSEC*20) 
     {
-    	printf("There is not enough IF data");
-        exit(1);
+    	printf("There is not enough IF data\n");
+        exit(100);
     }
+
     // send an interrupt every 20 ms
     kiwi_send_message(TASK_ID_TM, (void *)(&tm_message), sizeof(tm_message));
 //    printf("Interrupt is sent\n");
@@ -101,13 +102,13 @@ void gnss_main(void)
 int main(int arg, char *argv[])
 {
   int ret0;
-//  pDataFile = fopen("/home/dma/YKL/IFData/gps_data.bin","rb");
   pDataFile = fopen("../data/gps_data.bin","rb");
-  if ( pDataFile == NULL )
+  if (pDataFile == NULL)
   {
     printf("Raw data file does not exist!\n");
-    return 0;
+    return 1;
   }
+  /* TODO: need to move this to somewhere else */
   init_track();
   // create key
   kiwi_setup();

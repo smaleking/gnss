@@ -16,11 +16,11 @@
 // define track_information struct
 typedef struct track_information_s{
 	  int prn;
-	  //int codePhase;
-	  double carrierFreqBasis;
+	  //int codePhase;	  
 	  double codeFreqBasis;
-	  double carrierFreq;
-	  //carrier nco
+      //carrier nco
+      double carrierFreq;
+      double carrierFreqBasis;	  
 	  unsigned int carrierPhase;
 	  unsigned int carrierPhaseBack;
 	  unsigned int carrierPhaseCycleCount;
