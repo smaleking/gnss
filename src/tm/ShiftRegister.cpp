@@ -30,8 +30,7 @@ void shiftIn(ShiftRegisterTaps *shiftRegister, int val)
 {
 	int i;
     // right shift, half chip spaced
-	for(i = shiftRegister->len - 1; i > 0; i--)
-	{
+	for(i = shiftRegister->len - 1; i > 0; i--) {
 		shiftRegister->reg[i] = shiftRegister->reg[i-1];
 	}
 	shiftRegister->reg[0] = val;

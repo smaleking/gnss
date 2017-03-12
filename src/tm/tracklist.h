@@ -14,7 +14,7 @@
 #define	TRACK_LIST_MAX (32)
 
 // define track_information struct
-typedef struct track_information_s{
+typedef struct track_information_s {
 	  int prn;
 	  //int codePhase;	  
 	  double codeFreqBasis;
@@ -56,18 +56,21 @@ typedef struct track_information_s{
 	  double codeNco;
 	  double oldCodeError;
 	  //nav bits
-      int state;               // 1. tracking 2. bit sync 3. frame sync
-      unsigned long oneMsCnt;  // one ms count 
-      int mod20cnt;    // from 0 to 19
-      int bitIdx;      // from 0 to 29, bit index within a word (30 bits)
-      int wordIdx;     // from 0 to 9,  word index within a subframe (10 words)
-      int subframeIdx; // from 0 to 4;
+      int state;                // 1. tracking 2. bit sync 3. frame sync
+      unsigned long oneMsCnt;   // one ms count 
+      int mod20cnt;             // from 0 to 19
+      int bitIdx;               // from 0 to 29, bit index within a word (30 bits)
+      int wordIdx;              // from 0 to 9,  word index within a subframe (10 words)
+      int subframeIdx;          // from 0 to 4;
+      int frameEdgeTow;         // gps tow,  decoded from HOW
+      int frameEdgeWeek;        // gps week, decoded from word3 of subframe 1
       int Bits[20];
 	  int BitFlipCnt[20];
       char polarKnown;
       char polarPositive;
       U32 wordBuffer[20];       // 2 consecutive subframes
       U32 frameData[5][10];
+      double tx_time;
 } track_information;
 
 // define track_array

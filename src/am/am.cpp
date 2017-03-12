@@ -104,9 +104,9 @@ void am_proc(void)
         // initiate search paramters
         //acq_init_search_parameters(prn, &acq_settings);
 
-        if(is_blind_search_done == false)
+        if (is_blind_search_done == false)
         {
-            for(prn = 1; prn < 33; prn++)
+            for (prn = 5; prn < 6; prn++)
             {
                 if(check_satellite_in_track_array_list(&track_info_array_list,prn)==0)
                     fft_search(prn, inbuffer);

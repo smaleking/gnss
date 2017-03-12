@@ -12,6 +12,14 @@
 
 #include "kiwi_data_types.h"
 
+typedef struct {
+    U32 week;       // gps week
+    double tow;     // gps time of week
+    U64 superCount; // 1ms interrupt count
+}  rx_time_t;
+
+extern rx_time_t rxClock;
+
 const U8 parity_table[] =
 {
   0x29, 0x16, 0x2a, 0x34,  // D29*, D30*, d1, d2

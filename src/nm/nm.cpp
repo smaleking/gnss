@@ -11,8 +11,9 @@
 #include "nm.h"
 #include "../rtos/kiwi_wrapper.h"
 
-decode_data_t decode_data[32];
 
+rx_time_t rxClock;
+decode_data_t decode_data[32];
 /* parity check for each word */
 U8 parity_check(U32 *p_dword, U32 *p_data)
 {

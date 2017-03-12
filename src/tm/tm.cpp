@@ -140,7 +140,7 @@ void codeTracking(track_information *ch)
 	fflush(testFileCodeFreq);
 }
 
-// 6. correlation for 20 ms
+// 6. correlation for 20 ms data
 void correlate(track_information *ch, char *inbuffer)
 {
 	int i,j;
@@ -149,18 +149,19 @@ void correlate(track_information *ch, char *inbuffer)
 	int complexData[2];
 
     // sample by sample processing
-	for(i = 0; i < SAMPS_PER_MSEC*40; i=i+2)
-	{
+	for(i = 0; i < SAMPS_PER_MSEC*40; i=i+2)  {
 		// carrier nco tick
 		ch->carrierPhase += ch->carrierPhaseStep;
-		if(((ch->carrierPhase &0x80000000) == 0) && ((ch->carrierPhaseBack & 0x80000000) != 0))
-		{
+		if(((ch->carrierPhase&0x80000000) == 0) && ((ch->carrierPhaseBack&0x80000000) != 0)) {
 			ch->carrierPhaseCycleCount++;
 		}
 		ch->carrierPhaseBack = ch->carrierPhase;
 		ch->carrierPhaseIndex = ch->carrierPhase >> 27; // 32 loop-up table
 		cossin[0] =  costable[ch->carrierPhaseIndex];
 		cossin[1] = -sintable[ch->carrierPhaseIndex];
+        // carrier removal, get baseband signal
+        complexData[0] = (inbuffer[i] * cossin[0] - inbuffer[i + 1] * cossin[1]) >> 3;
+        complexData[1] = (inbuffer[i] * cossin[1] + inbuffer[i + 1] * cossin[0]) >> 3;
 
 		// code nco tick
 		ch->codeCycle = 0;
@@ -168,40 +169,31 @@ void correlate(track_information *ch, char *inbuffer)
 
 		ch->codePhase += ch->codePhaseStep;
 		ch->codeClockMultiX = (((ch->codePhase & 0x80000000) ^ ch->codePhaseBack) != 0) ? 1 : 0;
-		if(ch->codeClockMultiX ==1)
-		{
+		if(ch->codeClockMultiX ==1) {
             // shift in half chip sample
 			shiftIn(&(ch->taps), currentCode);
 			ch->divideCount++;
             // one chip boundary
-			if(ch->divideCount >= ch->fullChipSamples)
-			{
+			if(ch->divideCount >= ch->fullChipSamples) {
 				ch->divideCount=0;
 				ch->codePhaseIndex++;
                 // one code period 
-				if(ch->codePhaseIndex >= ch->codePeriodLength)
-				{
+				if(ch->codePhaseIndex >= ch->codePeriodLength) {
 					ch->codePhaseIndex = 0;
 					ch->codeCycle = 1;
 				}
 			}
 		}
 		ch->codePhaseBack = ch->codePhase & 0x80000000;
-
-		// carrier removal, get baseband signal
-		complexData[0] = (inbuffer[i] * cossin[0] - inbuffer[i+1] * cossin[1]) >> 3;
-		complexData[1] = (inbuffer[i] * cossin[1] + inbuffer[i+1] * cossin[0]) >> 3;
-
+		
 		//correlate with E, P, L local codes
-		for(j = 0; j < 3; j++)
-		{
+		for(j = 0; j < 3; j++) {
 			ch->correlates[j][0] += ch->taps.taps[j] * complexData[0];  // real
 			ch->correlates[j][1] += ch->taps.taps[j] * complexData[1];  // imag
 		}
 
 		// 1ms boundary
-		if(ch->codeCycle == 1)
-		{
+		if(ch->codeCycle == 1)  {
             // save prompt I/Q
 			ch->prePromptIQ[0] = ch->measuresIQ[1][0];
 			ch->prePromptIQ[1] = ch->measuresIQ[1][1];
@@ -209,15 +201,13 @@ void correlate(track_information *ch, char *inbuffer)
             ch->oneMsCnt++;
             ch->mod20cnt = (ch->mod20cnt+1)%20;
             int mod20cnt = ch->mod20cnt;
-            ch->Bits[mod20cnt] = (ch->correlates[1][0])>0? 1:-1;
+            ch->Bits[mod20cnt] = (ch->correlates[1][0]>0)? 1:-1;
             if (ch->oneMsCnt>1000 && ch->state==1 )    // > 1s, assume stable tracking loop
             {
                 int preMod20cnt = (ch->mod20cnt == 0)? 19: ch->mod20cnt-1;
-                if (ch->Bits[mod20cnt] != ch->Bits[preMod20cnt]) 
-                {
+                if (ch->Bits[mod20cnt] != ch->Bits[preMod20cnt])  {
                     ch->BitFlipCnt[mod20cnt]++;
-                    if (ch->BitFlipCnt[mod20cnt] > 5)
-                    {
+                    if (ch->BitFlipCnt[mod20cnt] > 5) {
                         for (int k = 0; k < 20; k++)
                             if( ch->BitFlipCnt[k] > 1 && k != mod20cnt)
                                 exit(1);
@@ -227,23 +217,22 @@ void correlate(track_information *ch, char *inbuffer)
                 }
             }
             // save for measurement
-			for (j = 0; j < 3; j++)
-			{
+			for (j = 0; j < 3; j++) {
 				ch->measuresIQ[j][0] = ch->correlates[j][0]>>5;
 				ch->measuresIQ[j][1] = ch->correlates[j][1]>>5;
 				ch->correlates[j][0] = 0;
 				ch->correlates[j][1] = 0;
 			}
-            if (ch->state >= 2) // bit synced or frame sync
-            {
+            // bit synced or frame sync
+            if (ch->state >= 2)  {
                 if (ch->mod20cnt == 0)
                     ch->P_i_20ms =  ch->measuresIQ[1][0];
                 else
                     ch->P_i_20ms += ch->measuresIQ[1][0];
-                // new bit
+                // new bit collected
                 if (ch->mod20cnt == 19)
                 {
-                    int currBit = (ch->P_i_20ms > 0)?1:0;
+                    int currBit = (ch->P_i_20ms>0)? 1:0;
                     // save currBit
                     for (int k = 0; k < 19; k++)
                     {
@@ -267,6 +256,7 @@ void correlate(track_information *ch, char *inbuffer)
                                 U32 mod6_tow_next = ((TLW2&0x1)==0)? (HOW2&0x3fffe000)>>13: ((HOW2&0x3fffe000)^(0x3fffe000)) >>13;
                                 if (mod6_tow_next-mod6_tow_now == 1 || (mod6_tow_next == 0 && mod6_tow_now == 100799))
                                 {
+                                    // frame sync succeed
                                     ch->state = 3;
                                     // get subframe number
                                     U8 subframe = ((TLW1&0x1)==0)? (HOW1>>8&0x7) : ((HOW1>>8&0x7)^(0x7));
@@ -293,11 +283,12 @@ void correlate(track_information *ch, char *inbuffer)
                                     ch->bitIdx = 0;
                                     ch->wordIdx = 0;
                                     ch->subframeIdx = (subframe+1)%5; // subframeIdx from 0 to 4
+                                    ch->frameEdgeTow = mod6_tow_next * 6;
                                 }
                             }
                         }
-                    }
-                    else 
+                    }  /* if (ch->state == 2)  */
+                    else // frame synced!
                     {
                         // we have a complete subframe
                         if (ch->wordIdx == 9 && ch->bitIdx == 29) 
@@ -344,26 +335,26 @@ void correlate(track_information *ch, char *inbuffer)
 
                         // update bitIdx, wordIdx, and subframeIdx
                         ch->bitIdx++;
-                        if(ch->bitIdx == 30)    
-                        {
+                        if(ch->bitIdx == 30) {
                             ch->bitIdx = 0;
                             ch->wordIdx++;
-                            if (ch->wordIdx == 10) 
-                            {
+                            if (ch->wordIdx == 10) {
                                 ch->wordIdx = 0;
-                                ch->subframeIdx++;
+                                ch->subframeIdx++;                                                     
                                 if (ch->subframeIdx == 5)
                                     ch->subframeIdx = 0;
+                                ch->frameEdgeTow += 6;
+                                if (ch->frameEdgeTow == 100800) {
+                                    ch->frameEdgeTow = 0;
+                                }
                             }
-                        }
+                        } // if(ch->bitIdx == 30)
                     }
                 }//if (ch->mod20cnt == 19)
             } // if (ch->state >= 2)
 			// save 1ms correlation values after bit sync
-            if (ch->state >= -10) 
-            {
-                if (ch->prn == 5)
-			    {
+            if (ch->state >= -10) {
+                if (ch->prn == 5) {
                     fprintf(testFileIQ, "%d, %d, %d, %d, %d, %d\n", 
                                         ch->measuresIQ[0][0],ch->measuresIQ[0][1],
                                         ch->measuresIQ[1][0],ch->measuresIQ[1][1],
@@ -374,9 +365,25 @@ void correlate(track_information *ch, char *inbuffer)
             // loop update at 1ms boundary
 			carrierTrackingSDR(ch);
 			codeTrackingSDR(ch);
-		}
-	}
-}
+		} /* if(ch->codeCycle == 1) */
+	} // for(i = 0; i < SAMPS_PER_MSEC*40; i=i+2) 
+
+    /* update rx timer */
+    rxClock.superCount += 20;
+#if 1
+    /* get measurements */
+    if (ch->state >= 3) {        
+        static FILE *pfTime;
+        if (pfTime == NULL) {
+            pfTime = fopen("timing.txt", "wt");
+        }        
+        ch->tx_time =   ch->frameEdgeTow + ch->wordIdx*0.6 + ch->bitIdx*0.02 + ch->mod20cnt*1e-3
+                      + ch->codePhaseIndex/ch->codeFreq + ch->codePhase/P2TO32/ch->codeFreq;
+        fprintf(pfTime, "\n clock ms count is %llu, Tx time: %.9f", rxClock.superCount, ch->tx_time);
+        fflush(pfTime);
+    }
+#endif
+}  // correlate 
 
 // tm thread function
 void tm_proc(void)
@@ -396,80 +403,76 @@ void tm_proc(void)
 
     if (msg_tag == 1)
     {
-      acq_search_results temp;
-      while (  !isAcqResultQueueEmpty(pAcqResQueue) )
-      {
-        popAcqResultQueue(pAcqResQueue, &temp);
-        if((temp.prn == 5) && (check_satellite_in_track_array_list(&track_info_array_list, 5) == 0))
-        {
-			track_information ch;
-			ch.prn = temp.prn;
+        acq_search_results temp;
+        while (!isAcqResultQueueEmpty(pAcqResQueue)) {
+            popAcqResultQueue(pAcqResQueue, &temp);
+            if((temp.prn == 5) && (check_satellite_in_track_array_list(&track_info_array_list, 5) == 0)) {
+			    track_information ch;
+			    ch.prn = temp.prn;
 
-			ch.carrierFreq = 20000-1956;//temp.carrier_freq;
-			ch.carrierFreqBasis = 20000-1956;
-			ch.codeFreqBasis=1023000.0;
-            ch.oldCarrNco = 0;           
-            ch.oldCarrError = 0;
-			ch.carrierPhase = 0;
-            ch.carrierPhaseBack = 0;
-			ch.carrierPhaseIndex = 0;
-			ch.carrierPhaseCycleCount = 0;
-			ch.carrierPhaseStep = (unsigned int)(pow(2,32) * ch.carrierFreq / SAMPLING_FREQUENCY);
+			    ch.carrierFreq = 20000-1956;//temp.carrier_freq;
+			    ch.carrierFreqBasis = 20000-1956;
+			    ch.codeFreqBasis=1023000.0;
+                ch.oldCarrNco = 0;           
+                ch.oldCarrError = 0;
+			    ch.carrierPhase = 0;
+                ch.carrierPhaseBack = 0;
+			    ch.carrierPhaseIndex = 0;
+			    ch.carrierPhaseCycleCount = 0;
+			    ch.carrierPhaseStep = (unsigned int)(pow(2,32) * ch.carrierFreq / SAMPLING_FREQUENCY);
 
-            ch.oldCodeNco = 0;
-            ch.oldCodeError = 0;
-			ch.codeFreq = 1023000.0;
-            ch.codePhase = 0;
-            ch.codePhaseBack = 0;
-			ch.codePhaseIndex = (4000 - temp.code_phase)*1023/4000 + 1;
-			ch.halfChipSamples = 1;
-			ch.fullChipSamples = 2;
-			ch.codePeriodLength = 1023;
-			ch.codePhaseStep = (unsigned int)(pow(2,32) * 1023000 * ch.halfChipSamples / SAMPLING_FREQUENCY);
-			initShiftRegisterTaps(&(ch.taps),1);
-            for (int k = 0; k < 3; k++) {
-                ch.correlates[k][0] = ch.correlates[k][1] = 0;
+                ch.oldCodeNco = 0;
+                ch.oldCodeError = 0;
+			    ch.codeFreq = 1023000.0;
+                ch.codePhase = 0;
+                ch.codePhaseBack = 0;
+			    ch.codePhaseIndex = (4000 - temp.code_phase)*1023/4000 + 1;
+			    ch.halfChipSamples = 1;
+			    ch.fullChipSamples = 2;
+			    ch.codePeriodLength = 1023;
+			    ch.codePhaseStep = (unsigned int)(pow(2,32) * 1023000 * ch.halfChipSamples / SAMPLING_FREQUENCY);
+			    initShiftRegisterTaps(&(ch.taps),1);
+                for (int k = 0; k < 3; k++) {
+                    ch.correlates[k][0] = ch.correlates[k][1] = 0;
+                }
+			    ch.carrierLoopError3rd = 0;
+			    ch.carrierLoopError2nd = 0;
+			    ch.codeLoopError2nd = 0;
+                ch.divideCount = 0;
+                ch.P_i_20ms = 0;
+                ch.P_q_20ms = 0;
+                ch.oneMsCnt = 0;
+                ch.mod20cnt = 0;
+                ch.state    = 1;
+                ch.bitIdx   = 0;
+                ch.wordIdx  = 0;
+                ch.subframeIdx = 0;
+                for (int k = 0; k < 20; k++) {
+                    ch.BitFlipCnt[k] = ch.Bits[k] = 0;
+                    ch.wordBuffer[k] = 0;
+                }
+                ch.polarKnown = 0;
+                ch.polarPositive = 0;
+                for (int i = 0; i < 5; i++)
+                    for (int j = 0; j < 10; j++)
+                        ch.frameData[i][j] = 0;
+                // add channel
+			    add_track_info_to_array_list(&track_info_array_list, &ch);
             }
-			ch.carrierLoopError3rd = 0;
-			ch.carrierLoopError2nd = 0;
-			ch.codeLoopError2nd = 0;
-            ch.divideCount = 0;
-            ch.P_i_20ms = 0;
-            ch.P_q_20ms = 0;
-            ch.oneMsCnt = 0;
-            ch.mod20cnt = 0;
-            ch.state    = 1;
-            ch.bitIdx   = 0;
-            ch.wordIdx  = 0;
-            ch.subframeIdx = 0;
-            for (int k = 0; k < 20; k++) {
-                ch.BitFlipCnt[k] = ch.Bits[k] = 0;
-                ch.wordBuffer[k] = 0;
-            }
-            ch.polarKnown = 0;
-            ch.polarPositive = 0;
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 10; j++)
-                    ch.frameData[i][j] = 0;
-            // add channel
-			add_track_info_to_array_list(&track_info_array_list, &ch);
+            /*
+            printf("prn is %d\n", temp.prn);
+            printf("code phase is %d\n", temp.code_phase);
+            printf("carrier freqeuncy is %f \n", temp.carrier_freq);
+            */
+        } /* while (!isAcqResultQueueEmpty(pAcqResQueue)) */
+
+        int track_num = track_info_array_list_size(&track_info_array_list);
+        int i;
+        // do correlate for each PRN
+        for(i=0; i<track_num; i++) {
+    	    correlate(get_track_info(&track_info_array_list, i), (char *)inbuffer);
         }
-        /*
-        printf("prn is %d\n", temp.prn);
-        printf("code phase is %d\n", temp.code_phase);
-        printf("carrier freqeuncy is %f \n", temp.carrier_freq);
-        */
-      }
-
-      int track_num = track_info_array_list_size(&track_info_array_list);
-      int i;
-      // do correlate for each PRN
-      for(i=0; i<track_num; i++)      
-      {
-    	  correlate(get_track_info(&track_info_array_list, i), (char *)inbuffer);
-      }
-      //printf("tm is executed\n");
-
-    }
-  }
+        //printf("tm is executed\n");
+    } /* if (msg_tag == 1) */
+  } /* while(1) */
 }

@@ -29,35 +29,55 @@ endif()
 set(RTOS_SRCS
     src/rtos/kiwi_task_msg.cpp
     src/rtos/kiwi_wrapper.cpp
+	src/rtos/kiwi_data_types.h
+	src/rtos/kiwi_task_msg.h
+	src/rtos/kiwi_tasks.h
+	src/rtos/kiwi_wrapper.h
    )
 #3 set up am source files
 set(AM_SRCS
     src/am/am.cpp
     src/am/fft_search.cpp
+	src/am/am.h
+	src/am/fft_search.h
    )
+   
 #4 set up tm source files
 set(TM_SRCS
     src/tm/tm.cpp
     src/tm/tracklist.cpp
     src/tm/ShiftRegister.cpp
     src/tm/loopfilterconfig.cpp
+	src/tm/loopfilterconfig.h
+	src/tm/ShiftRegister.h
+	src/tm/tm.h
+	src/tm/tracklist.h
    )
+   
 #5 set up nm source files
 set(NM_SRCS
     src/nm/nm.cpp
+	src/nm/nm.h
    )
+   
 #6 set up pf source files
 set(PF_SRCS
     src/pf/pf.cpp
+	src/pf/pf.h
    )
+   
 #7 set up utils source files
 set(UTILS_SRCS
     src/utils/cacode.cpp
     src/utils/sampleCAcode.cpp
+	src/utils/cacode.h
+	src/utils/sampleCAcode.h
    )
 #8, set up kiss_fft files
 set(KISS_FFT_SRCS
     src/kiss_fft/kiss_fft.c
+	_kiss_fft_guts.h
+	kiss_fft.h
   )
 
 set(SRCS
