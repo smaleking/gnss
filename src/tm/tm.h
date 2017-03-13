@@ -24,11 +24,11 @@ typedef struct tm_message{
 //correlator
 void initPRNCodeTable(int *prncodeTable);
 void init_track();
-void carrierTrackingSDR(track_information *one_satellite_info);
-void codeTrackingSDR(track_information *one_satellite_info);
-void carrierTracking(track_information *one_satellite_info);
-void codeTracking(track_information *one_satellite_info);
-void correlate(track_information *one_satellite_info, char *inbuffer);
+void carrierTrackingSDR(Channel *one_satellite_info);
+void codeTrackingSDR(Channel *one_satellite_info);
+void carrierTracking(Channel *one_satellite_info);
+void codeTracking(Channel *one_satellite_info);
+void correlate(Channel *one_satellite_info, char *inbuffer);
 
 void tm_proc(void);
 

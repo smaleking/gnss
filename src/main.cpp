@@ -104,9 +104,7 @@ int main(int arg, char *argv[])
   {
     printf("Raw data file does not exist!\n");
     return 1;
-  }
-  /* TODO: need to move this to somewhere else */
-  init_track();
+  }  
   // create key
   kiwi_setup();
   /* create main thread */

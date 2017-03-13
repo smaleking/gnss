@@ -87,14 +87,11 @@ void am_proc(void)
     // initialzie acq result queue;
     pAcqResQueue = &acqResQueue;
     initAcqResultQueue(pAcqResQueue);
-    if ( isAcqResultQueueEmpty( pAcqResQueue))
-        printf("acquisition result queue is empty\n");
-  
-  // read in 12 ms data, real, short
-  //size_t eleNum;
-  //eleNum = fread(inbuffer, sizeof(S16), 4000*12, pDataFile);
-
-    int prn = 1;
+    /*
+    if (isAcqResultQueueEmpty(pAcqResQueue))
+        printf("acquisition result queue is empty\n");    
+        */    
+    // std::vector<int> prnList;
     // start main loop
     while(1)
     {
@@ -103,11 +100,12 @@ void am_proc(void)
         /* start to do fft acq search */
         // initiate search paramters
         //acq_init_search_parameters(prn, &acq_settings);
-
+        int prnList[6] = {2, 5, 13, 20, 25, 29};
         if (is_blind_search_done == false)
         {
-            for (prn = 5; prn < 6; prn++)
+            for (int i = 0; i < 6; i++)            
             {
+                int prn = prnList[i];
                 if(check_satellite_in_track_array_list(&track_info_array_list,prn)==0)
                     fft_search(prn, inbuffer);
             }

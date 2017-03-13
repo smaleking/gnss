@@ -9,7 +9,7 @@
 *===========================================================*/
 #ifndef NM_H
 #define NM_H
-
+#include <stdio.h>
 #include "kiwi_data_types.h"
 
 typedef struct {
@@ -100,7 +100,7 @@ void decodeSubframe2(U32 *pSrc, decode_data_t *pDst);
 void decodeSubframe3(U32 *pSrc, decode_data_t *pDst);
 
 /* print out decoded message */
-void print_decodedMsg(decode_data_t *pDecodedMsg);
+void print_decodedMsg(FILE *pf, decode_data_t *pDecodedMsg);
 
 /* main process of nm */
 void nm_proc(void);

@@ -1,6 +1,8 @@
+==========================================================================================
 01-08-2017
 
-Abandon the idea of adding more taps. Delete the branch multiple taps. The current implementation has intrinsic limitations of adding new taps.
+Abandon the idea of adding more taps. Delete the branch multiple taps. 
+The current implementation has intrinsic limitations of adding new taps.
 
 Work on bit sync. It should be run inside tracking loop.
 
@@ -9,7 +11,7 @@ Work on bit sync. It should be run inside tracking loop.
 	1. pulling
 	2. bit-sync  
 
-
+==========================================================================================
 01-09-2017
 
 1 frame = 5 subframes 
@@ -32,3 +34,24 @@ To do frame sync, we save two subframes, 20 words.
 
 
 
+==========================================================================================
+03-12-2017
+
+Current status: 
+	one channel tracking/bit sync/frame sync/tranmission time is done.
+	In windows, vs project is automatically generated with CMakeLists.txt.
+				
+TODO: 
+	1. Optimize tracking strucure. the local code generator is not efficient.
+	2. Multiple channel test.
+				
+Details:
+
+1. In tm_proc(), if there is an acquisition result from am thread, we need to 
+   initialize a Channel object. This activity should be wrapped by a function. 
+   
+2. Move rxceiver clock out from channel tracking
+
+3. Test different PRNs, but the PLL seems not tolerant to frequency offset.
+
+4. 

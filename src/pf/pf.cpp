@@ -8,9 +8,16 @@
 #include <stdio.h>
 #include "../rtos/kiwi_wrapper.h"
 
+FILE *pfRinex;
 void pf_proc(void)
 {
   printf("pf starts to run! task_id = %d\n", kiwi_get_taskID() );
+  pfRinex = fopen("tx_time.log", "wt");
+  if (pfRinex == NULL) {
+      printf("cannot create tx_time.log!\n");
+      exit(101);
+  }
+
   while(1)
   {
     kiwi_run_next_task();

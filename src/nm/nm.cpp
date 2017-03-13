@@ -191,43 +191,43 @@ void decodeSubframe3(U32 *pSrc, decode_data_t *pDst)
 }
 
 /* print out decoded message */
-void print_decodedMsg(decode_data_t *pDecodedMsg)
+void print_decodedMsg(FILE *pf, decode_data_t *pDecodedMsg)
 {
     /* print satellite info */
-    printf("URA is %d\n", pDecodedMsg->info.URA);
-    printf("health is %d\n", pDecodedMsg->info.health);
-    printf("\n");
+    fprintf(pf, "URA is %d\n", pDecodedMsg->info.URA);
+    fprintf(pf, "health is %d\n", pDecodedMsg->info.health);
+    fprintf(pf, "\n");
     /* print gps time */
-    printf("gps week is %d\n", pDecodedMsg->gpstime.gpsWeek);
-    printf("gps secdons is %d\n", pDecodedMsg->gpstime.gpsSeconds);
-    printf("\n");
+    fprintf(pf, "gps week is %d\n", pDecodedMsg->gpstime.gpsWeek);
+    fprintf(pf, "gps secdons is %d\n", pDecodedMsg->gpstime.gpsSeconds);
+    fprintf(pf, "\n");
     /* printf clock correction */
-    printf("IODC is %d\n", pDecodedMsg->clkCorr.IODC);
-    printf("toc is %d\n", pDecodedMsg->clkCorr.toc);
-    printf("tgd is %.12e\n", pDecodedMsg->clkCorr.tgd);
-    printf("af0 is %.12e\n", pDecodedMsg->clkCorr.af0);
-    printf("af1 is %.12e\n", pDecodedMsg->clkCorr.af1);
-    printf("af2 is %.12e\n", pDecodedMsg->clkCorr.af2);
-    printf("\n");
+    fprintf(pf, "IODC is %d\n", pDecodedMsg->clkCorr.IODC);
+    fprintf(pf, "toc is %d\n", pDecodedMsg->clkCorr.toc);
+    fprintf(pf, "tgd is %.12e\n", pDecodedMsg->clkCorr.tgd);
+    fprintf(pf, "af0 is %.12e\n", pDecodedMsg->clkCorr.af0);
+    fprintf(pf, "af1 is %.12e\n", pDecodedMsg->clkCorr.af1);
+    fprintf(pf, "af2 is %.12e\n", pDecodedMsg->clkCorr.af2);
+    fprintf(pf, "\n");
     /* print ephemeris */
-    printf("IODE2 is %d\n", pDecodedMsg->eph.IODE2);
-    printf("IODE3 is %d\n", pDecodedMsg->eph.IODE3);
-    printf("toe is %d\n", pDecodedMsg->eph.toe);
-    printf("sqrt_a is %.12e\n", pDecodedMsg->eph.sqrt_a);
-    printf("e is %.12e\n", pDecodedMsg->eph.e);
-    printf("i0 is %.12e\n", pDecodedMsg->eph.i0);
-    printf("Omega0 is %.12e\n", pDecodedMsg->eph.Omega0);
-    printf("omega is %.12e\n", pDecodedMsg->eph.omega);
-    printf("M0 is %.12e\n", pDecodedMsg->eph.M0);
-    printf("delta_n is %.12e\n", pDecodedMsg->eph.delta_n);
-    printf("i_dot is %.12e\n", pDecodedMsg->eph.i_dot);
-    printf("Omega_dot is %.12e\n", pDecodedMsg->eph.Omega_dot);
-    printf("Cuc is %.12e\n", pDecodedMsg->eph.Cuc);
-    printf("Cus is %.12e\n", pDecodedMsg->eph.Cus);
-    printf("Crc is %.12e\n", pDecodedMsg->eph.Crc);
-    printf("Crs is %.12e\n", pDecodedMsg->eph.Crs);
-    printf("Cic is %.12e\n", pDecodedMsg->eph.Cic);
-    printf("Cis is %.12e\n", pDecodedMsg->eph.Cis);
+    fprintf(pf, "IODE2 is %d\n", pDecodedMsg->eph.IODE2);
+    fprintf(pf, "IODE3 is %d\n", pDecodedMsg->eph.IODE3);
+    fprintf(pf, "toe is %d\n", pDecodedMsg->eph.toe);
+    fprintf(pf, "sqrt_a is %.12e\n", pDecodedMsg->eph.sqrt_a);
+    fprintf(pf, "e is %.12e\n", pDecodedMsg->eph.e);
+    fprintf(pf, "i0 is %.12e\n", pDecodedMsg->eph.i0);
+    fprintf(pf, "Omega0 is %.12e\n", pDecodedMsg->eph.Omega0);
+    fprintf(pf, "omega is %.12e\n", pDecodedMsg->eph.omega);
+    fprintf(pf, "M0 is %.12e\n", pDecodedMsg->eph.M0);
+    fprintf(pf, "delta_n is %.12e\n", pDecodedMsg->eph.delta_n);
+    fprintf(pf, "i_dot is %.12e\n", pDecodedMsg->eph.i_dot);
+    fprintf(pf, "Omega_dot is %.12e\n", pDecodedMsg->eph.Omega_dot);
+    fprintf(pf, "Cuc is %.12e\n", pDecodedMsg->eph.Cuc);
+    fprintf(pf, "Cus is %.12e\n", pDecodedMsg->eph.Cus);
+    fprintf(pf, "Crc is %.12e\n", pDecodedMsg->eph.Crc);
+    fprintf(pf, "Crs is %.12e\n", pDecodedMsg->eph.Crs);
+    fprintf(pf, "Cic is %.12e\n", pDecodedMsg->eph.Cic);
+    fprintf(pf, "Cis is %.12e\n", pDecodedMsg->eph.Cis);
 }
 
 /* main process of nm*/

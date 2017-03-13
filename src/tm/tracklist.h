@@ -8,13 +8,15 @@
 #ifndef TRACKLIST_H_
 #define TRACKLIST_H_
 
+#include <stdio.h>
 #include "kiwi_data_types.h"
 #include "ShiftRegister.h"
+#include "../am/am.h"
 
 #define	TRACK_LIST_MAX (32)
 
-// define track_information struct
-typedef struct track_information_s {
+// define Channel struct
+typedef struct Channel_s {
 	  int prn;
 	  //int codePhase;	  
 	  double codeFreqBasis;
@@ -71,22 +73,29 @@ typedef struct track_information_s {
       U32 wordBuffer[20];       // 2 consecutive subframes
       U32 frameData[5][10];
       double tx_time;
-} track_information;
+
+      // save tracking variable 
+      FILE *pfTracking;
+      FILE *pfEph;
+} Channel;
 
 // define track_array
 typedef struct track_array_list_s{
-	track_information info[TRACK_LIST_MAX];
+	Channel channels[TRACK_LIST_MAX];
 	int capacity;
 } track_array_list;
 
-// 1. initialzie teh track_arrayList object
+// 0. initialize a single channel using acquisition result
+void init_channel(Channel *pch, acq_search_results acq_result);
+
+// 1. initialize the track_arrayList object
 void init_track_array_list(track_array_list* track_info_array_list);
 
 // 2. check if a satellite is in track list
 int check_satellite_in_track_array_list(track_array_list *track_info_array_list, int prn);
 
 // 3. add a channel to channel list
-void add_track_info_to_array_list(track_array_list *track_info_array_list, track_information *one_satellite_info);
+void add_track_info_to_array_list(track_array_list *track_info_array_list, Channel *one_satellite_info);
 
 // 4. remove a channel from channel list
 void remove_track_info_from_array_list(track_array_list * track_info_array_list, int prn);
@@ -95,6 +104,6 @@ void remove_track_info_from_array_list(track_array_list * track_info_array_list,
 int track_info_array_list_size(track_array_list *track_info_array_list);
 
 // 6. get track info
-track_information *get_track_info(track_array_list *track_info_array_list, int index);
+Channel *get_track_info(track_array_list *track_info_array_list, int index);
 
 #endif /* TRACKLIST_H_ */
