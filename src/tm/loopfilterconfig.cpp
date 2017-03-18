@@ -7,7 +7,7 @@
 
 #include "loopfilterconfig.h"
 
-// 1. initialize filter parameters given noise bandwidth, damping ratio, and gain
+// 1. initialize second order filter coefficient (dma), given BW, damping ratio, gain
 void init_filter_parameters(filter_parameters *filter_par,double bandwidth, double dampingratio, double gain)
 {
 	double wn;
@@ -18,7 +18,7 @@ void init_filter_parameters(filter_parameters *filter_par,double bandwidth, doub
 	filter_par->tau2 = 2.0 * dampingratio / wn;
 }
 
-// 2. initialize third order filter coefficient
+// 2. initialize third order filter coefficient (Kaplan)
 void InitThirdOrderFilter(ThirdOrderFilterParameters *filter, double bandwidth)
 {
 	double wop;
@@ -28,7 +28,7 @@ void InitThirdOrderFilter(ThirdOrderFilterParameters *filter, double bandwidth)
 	filter->C3 = wop * wop * wop;
 }
 
-// 3. initialize second order filter coefficient
+// 3. initialize second order filter coefficient (Kaplan)
 void InitSecondOrderFilter(SecondOrderFilterParameters *filter, double bandwidth)
 {
 	double wof;

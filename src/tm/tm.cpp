@@ -57,7 +57,7 @@ void init_track()
 	initPRNCodeTable(prncodetable[0]);    
 }
 
-// 3. carrier tracking loop
+// 3. second order carrier tracking loop
 void carrierTrackingSDR(Channel *ch)
 {
 	double carrError;
@@ -70,7 +70,7 @@ void carrierTrackingSDR(Channel *ch)
 	ch->carrierPhaseStep = (unsigned int)(pow(2,32) * ch->carrierFreq / SAMPLING_FREQUENCY);
 }
 
-// 4. code tracking loop
+// 4. second order code tracking loop
 void codeTrackingSDR(Channel *ch)
 {
 	double early, late, codeError;

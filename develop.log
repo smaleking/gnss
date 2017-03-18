@@ -54,4 +54,26 @@ Details:
 
 3. Test different PRNs, but the PLL seems not tolerant to frequency offset.
 
-4. 
+4. Got 6 measurements from PRN 2, 5, 13, 20, 25, 29 and have them in logged files.
+
+
+==========================================================================================
+03-13-2017
+
+TODO:
+1. Acquisition result is not accurate enough, need to do fine search
+2. The pull-in range of PLL is not good enough, need FLL + Costas
+3. After bit sync, we need to do 20ms loop update
+4. Need C/No estimator 
+5. Design tracking loop transition logic (FLL->PLL->Bit Sync->Frame Sync ->FLL -> Lost Lock)
+6. Do we need Kalman filter for tracking loops?
+
+Through simulation, the initial frequency offset must be < 100 Hz to be within the pull-in range of PLL.
+
+==========================================================================================
+03-14-2017
+
+TODO:
+
+1. After acquisition, the channel state should be FLL/PLL_W/PLL_N
+

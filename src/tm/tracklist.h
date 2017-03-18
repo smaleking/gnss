@@ -15,6 +15,13 @@
 
 #define	TRACK_LIST_MAX (32)
 
+enum CH_STATE {
+    CH_OFF,
+    CH_FLL_WIDE,
+    CH_FLL_NARROW,
+    CH_PLL_WIDE
+};
+
 // define Channel struct
 typedef struct Channel_s {
 	  int prn;
